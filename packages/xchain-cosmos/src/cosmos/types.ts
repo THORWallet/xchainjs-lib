@@ -1,9 +1,8 @@
 import { BigSource } from 'big.js'
 
-import { PrivKey, Msg, codec } from 'cosmos-client'
-import { BaseAccount, StdTx } from 'cosmos-client/x/auth'
-import { StdTxFee } from 'cosmos-client/api'
+import { StdTx } from 'cosmos-client/esm/openapi'
 import { RootDerivationPaths, Network } from '@thorwallet/xchain-client'
+import { cosmosclient, cosmos } from 'cosmos-client'
 
 export type CosmosSDKClientParams = {
   server: string
@@ -25,23 +24,23 @@ export type SearchTxParams = {
 }
 
 export type TransferParams = {
-  privkey: PrivKey
+  privkey: cosmosclient.PrivKey
   from: string
   to: string
   amount: BigSource
   asset: string
   memo?: string
-  fee?: StdTxFee
+  fee?: StdTx['fee']
 }
 
 export type BaseAccountResponse = {
   type?: string
-  value?: BaseAccount
+  value?: cosmos.auth.v1beta1.BaseAccount
 }
 
 export type RawTxResponse = {
   body: {
-    messages: Msg[]
+    messages: cosmos.bank.v1beta1.Msg[]
   }
 }
 
@@ -69,7 +68,7 @@ export type TxResponse = {
   logs?: TxLog[]
   gas_wanted?: string
   gas_used?: string
-  tx?: StdTx | RawTxResponse | codec.AminoWrapping
+  tx?: StdTx | RawTxResponse
   timestamp: string
 }
 

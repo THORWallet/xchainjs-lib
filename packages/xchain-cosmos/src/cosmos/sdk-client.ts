@@ -4,14 +4,11 @@ import * as BIP32 from 'bip32'
 import { TxHistoryParams } from '@thorwallet/xchain-client'
 import * as xchainCrypto from '@thorwallet/xchain-crypto'
 
-import { CosmosSDK, AccAddress, PrivKeySecp256k1, PrivKey, Msg } from 'cosmos-client'
-import { BroadcastTxCommitResult, Coin, StdTxSignature } from 'cosmos-client/api'
-import { auth, StdTx, BaseAccount } from 'cosmos-client/x/auth'
-import { bank, MsgSend } from 'cosmos-client/x/bank'
+import { cosmosclient, cosmos } from 'cosmos-client'
+import { BroadcastTxCommitResult, Coin, StdTx, TransactionsApiFp } from 'cosmos-client/esm/openapi'
 
 import {
   APIQueryParam,
-  BaseAccountResponse,
   SearchTxParams,
   TransferParams,
   TxHistoryResponse,
@@ -21,9 +18,11 @@ import {
   RPCResponse,
 } from './types'
 import { getQueryString } from '../util'
+import { setBech32Prefix } from 'cosmos-client/cjs/config/module'
+import { AuthApiFp, BankApiFp } from 'cosmos-client/cjs/openapi/api'
 
 export class CosmosSDKClient {
-  sdk: CosmosSDK
+  sdk: cosmosclient.CosmosSDK
 
   server: string
   chainId: string
@@ -35,7 +34,7 @@ export class CosmosSDKClient {
     this.server = server
     this.chainId = chainId
     this.prefix = prefix
-    this.sdk = new CosmosSDK(this.server, this.chainId)
+    this.sdk = new cosmosclient.CosmosSDK(this.server, this.chainId)
   }
 
   updatePrefix = (prefix: string) => {
@@ -44,30 +43,30 @@ export class CosmosSDKClient {
   }
 
   setPrefix = (): void => {
-    AccAddress.setBech32Prefix(
-      this.prefix,
-      this.prefix + 'pub',
-      this.prefix + 'valoper',
-      this.prefix + 'valoperpub',
-      this.prefix + 'valcons',
-      this.prefix + 'valconspub',
-    )
+    setBech32Prefix({
+      accAddr: this.prefix,
+      accPub: this.prefix + 'pub',
+      valAddr: this.prefix + 'valoper',
+      valPub: this.prefix + 'valoperpub',
+      consAddr: this.prefix + 'valcons',
+      consPub: this.prefix + 'valconspub',
+    })
   }
 
-  getAddressFromPrivKey = (privkey: PrivKey): string => {
+  getAddressFromPrivKey = (privkey: cosmosclient.PrivKey): string => {
     this.setPrefix()
 
-    return AccAddress.fromPublicKey(privkey.getPubKey()).toBech32()
+    return privkey.pubKey().address().toString()
   }
 
   getAddressFromMnemonic = (mnemonic: string, derivationPath: string): string => {
     this.setPrefix()
     const privKey = this.getPrivKeyFromMnemonic(mnemonic, derivationPath)
 
-    return AccAddress.fromPublicKey(privKey.getPubKey()).toBech32()
+    return privKey.pubKey().address().toString()
   }
 
-  getPrivKeyFromMnemonic = (mnemonic: string, derivationPath: string): PrivKey => {
+  getPrivKeyFromMnemonic = (mnemonic: string, derivationPath: string): cosmosclient.secp256k1.PrivKey => {
     const seed = xchainCrypto.getSeed(mnemonic)
     const node = BIP32.fromSeed(seed)
     const child = node.derivePath(derivationPath)
@@ -76,7 +75,9 @@ export class CosmosSDKClient {
       throw new Error('child does not have a privateKey')
     }
 
-    return new PrivKeySecp256k1(child.privateKey)
+    return new cosmosclient.secp256k1.PrivKey({
+      key: child.privateKey,
+    })
   }
 
   checkAddress = (address: string): boolean => {
@@ -87,7 +88,7 @@ export class CosmosSDKClient {
         return false
       }
 
-      return AccAddress.fromBech32(address).toBech32() === address
+      return cosmosclient.AccAddress.fromString(address).toString() === address
     } catch (err) {
       return false
     }
@@ -97,9 +98,11 @@ export class CosmosSDKClient {
     try {
       this.setPrefix()
 
-      const accAddress = AccAddress.fromBech32(address)
+      const accAddress = cosmosclient.AccAddress.fromString(address)
 
-      return bank.balancesAddressGet(this.sdk, accAddress).then((res) => res.data.result)
+      const req = await BankApiFp().bankBalancesAddressGet(accAddress.toString())
+      const resp = await req()
+      return resp.data
     } catch (error) {
       return Promise.reject(error)
     }
@@ -224,55 +227,62 @@ export class CosmosSDKClient {
     try {
       this.setPrefix()
 
-      const msg: Msg = [
-        MsgSend.fromJSON({
-          from_address: from,
-          to_address: to,
-          amount: [
-            {
-              amount: amount.toString(),
-              denom: asset,
-            },
-          ],
-        }),
-      ]
-      const signatures: StdTxSignature[] = []
-
-      const unsignedStdTx = StdTx.fromJSON({
-        msg,
+      const unsignedStdTx: StdTx = {
+        msg: [
+          JSON.stringify(
+            new cosmos.bank.v1beta1.MsgSend({
+              from_address: from,
+              to_address: to,
+              amount: [
+                {
+                  amount: amount.toString(),
+                  denom: asset,
+                },
+              ],
+            }).toJSON(),
+          ),
+        ],
         fee,
-        signatures,
+        signature: {
+          account_number: 'todo',
+          sequence: 'hi',
+        },
         memo,
-      })
+      }
 
-      return this.signAndBroadcast(unsignedStdTx, privkey, AccAddress.fromBech32(from))
+      return this.signAndBroadcast(unsignedStdTx, privkey, cosmosclient.AccAddress.fromString(from))
     } catch (error) {
       return Promise.reject(error)
     }
   }
 
   signAndBroadcast = async (
-    unsignedStdTx: StdTx,
-    privkey: PrivKey,
-    signer: AccAddress,
+    _unsignedStdTx: StdTx,
+    privkey: cosmosclient.PrivKey,
+    signer: cosmosclient.AccAddress,
   ): Promise<BroadcastTxCommitResult> => {
     try {
       this.setPrefix()
 
-      let account: BaseAccount = await auth.accountsAddressGet(this.sdk, signer).then((res) => res.data.result)
-      if (account.account_number === undefined) {
-        account = BaseAccount.fromJSON((account as BaseAccountResponse).value)
-      }
+      const account = await (await AuthApiFp().authAccountsAddressGet(signer.toString()))()
 
-      const signedStdTx = auth.signStdTx(
-        this.sdk,
-        privkey,
-        unsignedStdTx,
-        account.account_number.toString(),
-        account.sequence.toString(),
-      )
+      const txsPost = await TransactionsApiFp().txsPost({
+        mode: 'block',
+        tx: {
+          signature: {
+            account_number: account.data.value?.account_number as string,
+            pub_key: {
+              value: privkey.pubKey().bytes.toString(),
+            },
+            sequence: account.data.value?.sequence?.toString() as string,
+            signature: 'hihi',
+          },
+        },
+      })
 
-      return await auth.txsPost(this.sdk, signedStdTx, 'block').then((res) => res.data)
+      const { data } = await txsPost()
+
+      return data
     } catch (error) {
       return Promise.reject(error)
     }

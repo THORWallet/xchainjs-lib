@@ -1,9 +1,8 @@
 import { TxFrom, TxTo, Txs, Fees } from '@thorwallet/xchain-client'
 import { Asset, assetToString, baseAmount } from '@thorwallet/xchain-util'
+import { cosmos, cosmosclient } from 'cosmos-client'
 
-import { Msg, codec } from 'cosmos-client'
-import { StdTx } from 'cosmos-client/x/auth'
-import { MsgMultiSend, MsgSend } from 'cosmos-client/x/bank'
+import { StdTx } from 'cosmos-client/esm/openapi'
 
 import { RawTxResponse, TxResponse, APIQueryParam } from './cosmos/types'
 import { AssetAtom, AssetMuon } from './types'
@@ -19,10 +18,10 @@ export const DECIMAL = 6
  * @param {Msg} msg
  * @returns {boolean} `true` or `false`.
  */
-export const isMsgSend = (msg: Msg): msg is MsgSend =>
-  (msg as MsgSend)?.amount !== undefined &&
-  (msg as MsgSend)?.from_address !== undefined &&
-  (msg as MsgSend)?.to_address !== undefined
+export const isMsgSend = (msg: unknown): msg is cosmos.bank.v1beta1.MsgSend =>
+  (msg as cosmos.bank.v1beta1.MsgSend)?.amount !== undefined &&
+  (msg as cosmos.bank.v1beta1.MsgSend)?.from_address !== undefined &&
+  (msg as cosmos.bank.v1beta1.MsgSend)?.to_address !== undefined
 
 /**
  * Type guard for MsgMultiSend
@@ -30,8 +29,9 @@ export const isMsgSend = (msg: Msg): msg is MsgSend =>
  * @param {Msg} msg
  * @returns {boolean} `true` or `false`.
  */
-export const isMsgMultiSend = (msg: Msg): msg is MsgMultiSend =>
-  (msg as MsgMultiSend)?.inputs !== undefined && (msg as MsgMultiSend)?.outputs !== undefined
+export const isMsgMultiSend = (msg: unknown): msg is cosmos.bank.v1beta1.MsgMultiSend =>
+  (msg as cosmos.bank.v1beta1.MsgMultiSend)?.inputs !== undefined &&
+  (msg as cosmos.bank.v1beta1.MsgMultiSend)?.outputs !== undefined
 
 /**
  * Get denomination from Asset
@@ -66,31 +66,33 @@ export const getAsset = (denom: string): Asset | null => {
  */
 export const getTxsFromHistory = (txs: Array<TxResponse>, mainAsset: Asset): Txs => {
   return txs.reduce((acc, tx) => {
-    let msgs: Msg[] = []
+    let msgs: cosmos.bank.v1beta1.Msg[] = []
     if ((tx.tx as RawTxResponse).body === undefined) {
-      msgs = codec.fromJSONString(codec.toJSONString(tx.tx as StdTx)).msg
+      msgs = (cosmosclient.codec.unpackAny(cosmosclient.codec.packAny(tx.tx as StdTx)) as {
+        msg: cosmos.bank.v1beta1.Msg[]
+      }).msg
     } else {
-      msgs = codec.fromJSONString(codec.toJSONString((tx.tx as RawTxResponse).body.messages))
+      msgs = (cosmosclient.codec.unpackAny(cosmosclient.codec.packAny(tx.tx)) as RawTxResponse).body.messages
     }
 
     const from: TxFrom[] = []
     const to: TxTo[] = []
     msgs.map((msg) => {
       if (isMsgSend(msg)) {
-        const msgSend = msg as MsgSend
+        const msgSend = msg as cosmos.bank.v1beta1.MsgSend
         const amount = msgSend.amount
-          .map((coin) => baseAmount(coin.amount, 6))
+          .map((coin) => baseAmount(coin.amount as string, 6))
           .reduce((acc, cur) => baseAmount(acc.amount().plus(cur.amount()), 6), baseAmount(0, 6))
 
         let from_index = -1
 
         from.forEach((value, index) => {
-          if (value.from === msgSend.from_address.toBech32()) from_index = index
+          if (value.from === msgSend.from_address) from_index = index
         })
 
         if (from_index === -1) {
           from.push({
-            from: msgSend.from_address.toBech32(),
+            from: msgSend.from_address,
             amount,
           })
         } else {
@@ -100,23 +102,23 @@ export const getTxsFromHistory = (txs: Array<TxResponse>, mainAsset: Asset): Txs
         let to_index = -1
 
         to.forEach((value, index) => {
-          if (value.to === msgSend.to_address.toBech32()) to_index = index
+          if (value.to === msgSend.to_address) to_index = index
         })
 
         if (to_index === -1) {
           to.push({
-            to: msgSend.to_address.toBech32(),
+            to: msgSend.to_address,
             amount,
           })
         } else {
           to[to_index].amount = baseAmount(to[to_index].amount.amount().plus(amount.amount()), 6)
         }
       } else if (isMsgMultiSend(msg)) {
-        const msgMultiSend = msg as MsgMultiSend
+        const msgMultiSend = msg as cosmos.bank.v1beta1.MsgMultiSend
 
         msgMultiSend.inputs.map((input) => {
-          const amount = input.coins
-            .map((coin) => baseAmount(coin.amount, 6))
+          const amount = (input?.coins ?? [])
+            .map((coin) => baseAmount(coin.amount as string, 6))
             .reduce((acc, cur) => baseAmount(acc.amount().plus(cur.amount()), 6), baseAmount(0, 6))
 
           let from_index = -1
@@ -127,7 +129,7 @@ export const getTxsFromHistory = (txs: Array<TxResponse>, mainAsset: Asset): Txs
 
           if (from_index === -1) {
             from.push({
-              from: input.address,
+              from: input.address as string,
               amount,
             })
           } else {
@@ -136,8 +138,8 @@ export const getTxsFromHistory = (txs: Array<TxResponse>, mainAsset: Asset): Txs
         })
 
         msgMultiSend.outputs.map((output) => {
-          const amount = output.coins
-            .map((coin) => baseAmount(coin.amount, 6))
+          const amount = (output.coins as cosmos.base.v1beta1.ICoin[])
+            .map((coin) => baseAmount(coin.amount as string, 6))
             .reduce((acc, cur) => baseAmount(acc.amount().plus(cur.amount()), 6), baseAmount(0, 6))
 
           let to_index = -1
@@ -148,7 +150,7 @@ export const getTxsFromHistory = (txs: Array<TxResponse>, mainAsset: Asset): Txs
 
           if (to_index === -1) {
             to.push({
-              to: output.address,
+              to: output.address as string,
               amount,
             })
           } else {

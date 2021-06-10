@@ -1,5 +1,5 @@
-import { Asset, BaseAmount } from '@thorwallet/xchain-util'
 import { Network } from '@thorwallet/xchain-client/lib'
+import { Asset, BaseAmount } from '@thorwallet/xchain-util/lib'
 
 export type NodeUrl = {
   node: string

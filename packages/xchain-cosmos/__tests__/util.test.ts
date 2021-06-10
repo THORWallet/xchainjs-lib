@@ -1,11 +1,8 @@
-import { Msg } from 'cosmos-client'
-import { StdTxFee } from 'cosmos-client/api'
-import { StdTx } from 'cosmos-client/x/auth'
-import { MsgMultiSend, MsgSend } from 'cosmos-client/x/bank'
 import { baseAmount } from '@thorwallet/xchain-util'
 import { TxResponse, RawTxResponse, APIQueryParam } from '../src/cosmos/types'
 import { AssetMuon, AssetAtom } from '../src/types'
 import { isMsgMultiSend, isMsgSend, getDenom, getAsset, getTxsFromHistory, getQueryString } from '../src/util'
+import { StdTx } from 'cosmos-client/esm/openapi'
 
 describe('cosmos/util', () => {
   describe('Msg type guards', () => {
@@ -100,7 +97,7 @@ describe('cosmos/util', () => {
   })
 
   describe('parse Tx', () => {
-    const fee: StdTxFee = {
+    const fee: StdTx['fee'] = {
       gas: '200000',
       amount: [],
     }

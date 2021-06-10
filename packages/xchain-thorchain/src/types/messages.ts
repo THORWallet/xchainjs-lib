@@ -1,23 +1,22 @@
-import { Msg, AccAddress } from 'cosmos-client'
-import { StdTxFee } from 'cosmos-client/api'
-import { StdSignature } from 'cosmos-client/x/auth'
+import { cosmos, cosmosclient } from 'cosmos-client'
+import { StdTx } from 'cosmos-client/cjs/openapi/api'
 
 export type MsgCoin = {
   asset: string
   amount: string
 }
 
-export class MsgNativeTx extends Msg {
+export class MsgNativeTx extends cosmos.bank.v1beta1.MsgSend {
   coins: MsgCoin[]
   memo: string
-  signer: AccAddress
+  signer: cosmosclient.AccAddress
   /**
    *
    * @param from_address
    * @param to_address
    * @param amount
    */
-  constructor(coins: MsgCoin[], memo: string, signer: AccAddress) {
+  constructor(coins: MsgCoin[], memo: string, signer: cosmosclient.AccAddress) {
     super()
 
     this.coins = coins
@@ -33,7 +32,7 @@ export class MsgNativeTx extends Msg {
  * @returns {MsgNativeTx}
  */
 export const msgNativeTxFromJson = (value: { coins: MsgCoin[]; memo: string; signer: string }): MsgNativeTx => {
-  return new MsgNativeTx(value.coins, value.memo, AccAddress.fromBech32(value.signer))
+  return new MsgNativeTx(value.coins, value.memo, cosmosclient.AccAddress.fromString(value.signer))
 }
 
 export type AminoWrapping<T> = {
@@ -47,7 +46,7 @@ export type ThorchainDepositResponse = AminoWrapping<{
     memo: string
     signer: string
   }>[]
-  fee: StdTxFee
+  fee: StdTx['fee']
   signatures: StdSignature[]
   memo: string
   timeout_height: string

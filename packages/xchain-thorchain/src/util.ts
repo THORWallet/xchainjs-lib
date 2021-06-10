@@ -3,9 +3,10 @@ import { Txs, TxFrom, TxTo, Fees, Network, Address } from '@thorwallet/xchain-cl
 import { AssetRune, ExplorerUrl, ClientUrl, ExplorerUrls } from './types'
 import { TxResponse, RawTxResponse } from '@thorwallet/xchain-cosmos'
 import { TxHash } from '@thorwallet/xchain-client'
-import { AccAddress, codec, Msg } from 'cosmos-client'
-import { MsgMultiSend, MsgSend } from 'cosmos-client/x/bank'
-import { StdTx } from 'cosmos-client/x/auth'
+import { StdTx } from 'cosmos-client/esm/openapi'
+import { cosmos } from 'cosmos-client'
+
+const { MsgMultiSend, MsgSend } = cosmos.bank.v1beta1
 
 export const DECIMAL = 8
 export const DEFAULT_GAS_VALUE = '2000000'
@@ -62,8 +63,9 @@ export const isMsgSend = (msg: Msg): msg is MsgSend =>
  * @param {Msg} msg
  * @returns {boolean} `true` or `false`.
  */
-export const isMsgMultiSend = (msg: Msg): msg is MsgMultiSend =>
-  (msg as MsgMultiSend)?.inputs !== undefined && (msg as MsgMultiSend)?.outputs !== undefined
+export const isMsgMultiSend = (msg: unknown): msg is cosmos.bank.v1beta1.MsgMultiSend =>
+  (msg as cosmos.bank.v1beta1.MsgMultiSend)?.inputs !== undefined &&
+  (msg as cosmos.bank.v1beta1.MsgMultiSend)?.outputs !== undefined
 
 /**
  * Response guard for transaction broadcast

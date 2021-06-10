@@ -20,8 +20,7 @@ import { CosmosSDKClient, RPCTxResult } from '@thorwallet/xchain-cosmos'
 import { Asset, baseAmount, assetToString, assetFromString } from '@thorwallet/xchain-util'
 import * as xchainCrypto from '@thorwallet/xchain-crypto'
 
-import { PrivKey, AccAddress } from 'cosmos-client'
-import { StdTx } from 'cosmos-client/x/auth'
+import { StdTx } from 'cosmos-client/esm/openapi'
 
 import { AssetRune, DepositParam, ClientUrl, ThorchainClientParams, NodeUrl, ExplorerUrls } from './types'
 import { MsgNativeTx, msgNativeTxFromJson, ThorchainDepositResponse, TxResult } from './types/messages'
@@ -45,6 +44,7 @@ import {
   getExplorerAddressUrl,
   getExplorerTxUrl,
 } from './util'
+import { cosmosclient } from 'cosmos-client'
 
 /**
  * Interface for custom Thorchain client
@@ -247,7 +247,7 @@ class Client implements ThorchainClient, XChainClient {
    * @throws {"Phrase not set"}
    * Throws an error if phrase has not been set before
    * */
-  private getPrivateKey = (index = 0): PrivKey =>
+  private getPrivateKey = (index = 0): cosmosclient.PrivKey =>
     this.cosmosClient.getPrivKeyFromMnemonic(this.phrase, this.getFullDerivationPath(index))
 
   /**
@@ -481,12 +481,11 @@ class Client implements ThorchainClient, XChainClient {
         throw new Error('Invalid client url')
       }
 
-      const unsignedStdTx = StdTx.fromJSON({
-        msg: response.value.msg,
+      const unsignedStdTx: StdTx = {
+        msg: response.value.msg.map((m) => JSON.stringify(m)),
         fee: response.value.fee,
-        signatures: [],
         memo: '',
-      })
+      }
 
       return unsignedStdTx
     } catch (error) {
@@ -525,10 +524,12 @@ class Client implements ThorchainClient, XChainClient {
 
       const unsignedStdTx = await this.buildDepositTx(msgNativeTx)
       const privateKey = this.getPrivateKey(walletIndex)
-      const accAddress = AccAddress.fromBech32(signer)
+      const accAddress = cosmosclient.AccAddress.fromString(signer)
       const fee = unsignedStdTx.fee
       // max. gas
-      fee.gas = '10000000'
+      if (fee) {
+        fee.gas = '10000000'
+      }
 
       return this.cosmosClient
         .signAndBroadcast(unsignedStdTx, privateKey, accAddress)

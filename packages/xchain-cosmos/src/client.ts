@@ -16,12 +16,10 @@ import {
 import { Asset, baseAmount, assetToString } from '@thorwallet/xchain-util'
 import * as xchainCrypto from '@thorwallet/xchain-crypto'
 
-import { PrivKey, codec } from 'cosmos-client'
-import { MsgSend, MsgMultiSend } from 'cosmos-client/x/bank'
-
 import { CosmosSDKClient } from './cosmos/sdk-client'
 import { AssetAtom, AssetMuon } from './types'
 import { DECIMAL, getDenom, getAsset, getTxsFromHistory } from './util'
+import { cosmosclient } from 'cosmos-client'
 
 /**
  * Interface for custom Cosmos client
@@ -111,17 +109,6 @@ class Client implements CosmosClient, XChainClient {
   }
 
   /**
-   * @private
-   * Register message codecs.
-   *
-   * @returns {void}
-   */
-  private registerCodecs = (): void => {
-    codec.registerCodec('cosmos-sdk/MsgSend', MsgSend, MsgSend.fromJSON)
-    codec.registerCodec('cosmos-sdk/MsgMultiSend', MsgMultiSend, MsgMultiSend.fromJSON)
-  }
-
-  /**
    * Get the explorer url.
    *
    * @returns {string} The explorer url.
@@ -180,7 +167,7 @@ class Client implements CosmosClient, XChainClient {
    * @throws {"Phrase not set"}
    * Throws an error if phrase has not been set before
    * */
-  private getPrivateKey = (index = 0): PrivKey => {
+  private getPrivateKey = (index = 0): cosmosclient.PrivKey => {
     if (!this.phrase) throw new Error('Phrase not set')
 
     return this.getSDKClient().getPrivKeyFromMnemonic(this.phrase, this.getFullDerivationPath(index))
@@ -274,8 +261,6 @@ class Client implements CosmosClient, XChainClient {
     const txMaxHeight = undefined
 
     try {
-      this.registerCodecs()
-
       const mainAsset = this.getMainAsset()
       const txHistory = await this.getSDKClient().searchTx({
         messageAction,
@@ -325,7 +310,6 @@ class Client implements CosmosClient, XChainClient {
   transfer = async ({ walletIndex, asset, amount, recipient, memo }: TxParams): Promise<TxHash> => {
     try {
       const fromAddressIndex = walletIndex || 0
-      this.registerCodecs()
 
       const mainAsset = this.getMainAsset()
       const transferResult = await this.getSDKClient().transfer({
@@ -337,7 +321,7 @@ class Client implements CosmosClient, XChainClient {
         memo,
       })
 
-      return transferResult?.txhash || ''
+      return transferResult?.hash || ''
     } catch (error) {
       return Promise.reject(error)
     }
