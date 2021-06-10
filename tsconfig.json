@@ -4,11 +4,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@xchainjs/*": ["packages/*"]
+      "@thorwallet/*": ["packages/*"]
     },
     "jsx": "react",
     "types": ["jest", "node"],
-
 
     "outDir": "lib",
     "module": "esnext",
