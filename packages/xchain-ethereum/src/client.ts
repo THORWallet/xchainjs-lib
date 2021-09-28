@@ -3,11 +3,12 @@ import { EtherscanProvider, getDefaultProvider } from '@ethersproject/providers'
 import {
   Address,
   Balance,
-  Balances,
   BaseXChainClient,
   FeeOption,
   Fees,
+  FeeType,
   Network,
+  standardFeeRates,
   Tx,
   TxHash,
   TxHistoryParams,
@@ -17,7 +18,7 @@ import {
   XChainClientParams,
 } from '@thorwallet/xchain-client'
 import * as Crypto from '@thorwallet/xchain-crypto'
-import { Asset, AssetETH, assetToString, baseAmount, BaseAmount } from '@thorwallet/xchain-util'
+import { Asset, AssetETH, assetToString, baseAmount, BaseAmount, Chain } from '@thorwallet/xchain-util'
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { parseUnits, toUtf8Bytes } from 'ethers/lib/utils'
 import pThrottle from 'p-throttle'
@@ -36,8 +37,8 @@ import {
   GasPrices,
   InfuraCreds,
   IsApprovedParams,
-  Network as EthNetwork,
   TxOverrides,
+  EthNetwork,
 } from './types'
 import {
   BASE_TOKEN_GAS_COST,
@@ -91,7 +92,6 @@ export default class Client extends BaseXChainClient implements XChainClient, Et
   private infuraCreds: InfuraCreds | undefined
   private ethplorerUrl: string
   private ethplorerApiKey: string
-  private rootDerivationPaths: RootDerivationPaths
   private providers: Map<Network, Provider> = new Map<Network, Provider>()
   private addrCache: Record<string, Record<number, string>>
 
@@ -121,7 +121,19 @@ export default class Client extends BaseXChainClient implements XChainClient, Et
     this.addrCache = {}
     this.explorerUrl = explorerUrl || this.getDefaultExplorerURL()
     this.setupProviders()
-    this.setPhrase(phrase)
+  }
+  async estimateCall({
+    contractAddress,
+    abi,
+    funcName,
+    funcParams = [],
+    walletIndex = 0,
+  }: EstimateCallParams): Promise<BigNumber> {
+    if (!contractAddress) throw new Error('contractAddress must be provided')
+    const contract = new ethers.Contract(contractAddress, abi, this.getProvider()).connect(
+      await this.getWallet(walletIndex),
+    )
+    return contract.estimateGas[funcName](...funcParams)
   }
   getNetwork(): Network {
     throw new Error('Method not implemented.')
@@ -133,8 +145,6 @@ export default class Client extends BaseXChainClient implements XChainClient, Et
    * @returns {void}
    */
   purgeClient = async (): Promise<void> => {
-    super.purgeClient()
-
     this.hdNode = await HDNode.fromMnemonic('')
   }
 
@@ -320,7 +330,7 @@ export default class Client extends BaseXChainClient implements XChainClient, Et
    *
    * @throws {"Invalid asset"} throws when the give asset is an invalid one
    */
-  getBalance = async (address: Address, assets?: Asset[]): Promise<Balances> => {
+  getBalance = async (address: Address, assets?: Asset[]): Promise<Balance[]> => {
     const ethAddress = address || (await this.getAddress())
     // get ETH balance directly from provider
     const ethBalance: BigNumber = await this.getProvider().getBalance(ethAddress)
@@ -372,8 +382,15 @@ export default class Client extends BaseXChainClient implements XChainClient, Et
               apiKey: etherscan.apiKey,
             })
             const decimals =
-              BigNumber.from(await this.call<BigNumberish>(0, assetAddress, erc20ABI, 'decimals', [])).toNumber() ||
-              ETH_DECIMAL
+              BigNumber.from(
+                await this.call<BigNumberish>({
+                  walletIndex: 0,
+                  contractAddress: assetAddress,
+                  abi: erc20ABI,
+                  funcName: 'decimals',
+                  funcParams: [],
+                }),
+              ).toNumber() || ETH_DECIMAL
 
             if (!Number.isNaN(decimals)) {
               return {
@@ -393,6 +410,7 @@ export default class Client extends BaseXChainClient implements XChainClient, Et
 
       return balances
     }
+    throw new Error('no network')
   }
 
   /**
@@ -508,46 +526,26 @@ export default class Client extends BaseXChainClient implements XChainClient, Et
    * Thrown if the given contract address is empty.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  call = async <T>(
+  call = async <T>({
     walletIndex = 0,
-    contractAddress: Address,
-    abi: ethers.ContractInterface,
-    func: string,
-    params: Array<unknown>,
-  ): Promise<T> => {
+    contractAddress,
+    abi,
+    funcName,
+    funcParams,
+  }: {
+    walletIndex: number
+    contractAddress: Address
+    abi: ethers.ContractInterface
+    funcName: string
+    funcParams: Array<unknown>
+  }): Promise<T> => {
     if (!contractAddress) {
       return Promise.reject(new Error('contractAddress must be provided'))
     }
     const contract = new ethers.Contract(contractAddress, abi, this.getProvider()).connect(
       await this.getWallet(walletIndex),
     )
-    return contract[func](...params)
-  }
-
-  /**
-   * Call a contract function.
-   * @param {Address} contractAddress The contract address.
-   * @param {ContractInterface} abi The contract ABI json.
-   * @param {string} funcName The function to be called.
-   * @param {any[]} funcParams The parameters of the function.
-   * @param {number} walletIndex (optional) HD wallet index
-   * @returns {BigNumber} The result of the contract function call.
-   *
-   * @throws {"contractAddress must be provided"}
-   * Thrown if the given contract address is empty.
-   */
-  estimateCall = async (
-    contractAddress: Address,
-    abi: ethers.ContractInterface,
-    func: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    params: Array<any>,
-  ): Promise<BigNumber> => {
-    if (!contractAddress) {
-      return Promise.reject(new Error('contractAddress must be provided'))
-    }
-    const contract = new ethers.Contract(contractAddress, abi, this.getProvider()).connect(await this.getWallet(0))
-    return contract.estimateGas[func](...params)
+    return contract[funcName](...funcParams)
   }
 
   /**
@@ -565,6 +563,7 @@ export default class Client extends BaseXChainClient implements XChainClient, Et
     const owner = this.getAddress(walletIndex)
     const allowance = await this.call<BigNumberish>({
       contractAddress,
+      walletIndex: 0,
       abi: erc20ABI,
       funcName: 'allowance',
       funcParams: [owner, spenderAddress],
@@ -609,7 +608,7 @@ export default class Client extends BaseXChainClient implements XChainClient, Et
 
     const txAmount = amount ? BigNumber.from(amount.amount().toFixed()) : MAX_APPROVAL
     return await this.call<TransactionResponse>({
-      walletIndex,
+      walletIndex: 0,
       contractAddress,
       abi: erc20ABI,
       funcName: 'approve',

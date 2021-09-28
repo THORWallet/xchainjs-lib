@@ -1,4 +1,4 @@
-import { Fees, Tx } from '@thorwallet/xchain-client'
+import { Balance, Fees, FeeType, Network, Tx, TxType } from '@thorwallet/xchain-client'
 import {
   Asset,
   assetAmount,
@@ -8,6 +8,7 @@ import {
   assetToString,
   BaseAmount,
   baseAmount,
+  Chain,
 } from '@thorwallet/xchain-util'
 import { BigNumber, ethers, providers } from 'ethers'
 import { parseUnits } from 'ethers/lib/utils'
