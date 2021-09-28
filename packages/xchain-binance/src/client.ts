@@ -3,6 +3,7 @@ import * as crypto from '@binance-chain/javascript-sdk/lib/crypto'
 import { SignedSend } from '@binance-chain/javascript-sdk/lib/types'
 import {
   Address,
+  Balance,
   BaseXChainClient,
   Fees,
   FeeType,
@@ -28,9 +29,17 @@ import {
   baseAmount,
   baseToAsset,
   BNBChain,
+  Chain,
 } from '@thorwallet/xchain-util'
 import axios from 'axios'
-import { Account, Fees as BinanceFees, TransactionResult, TransferFee, TxPage as BinanceTxPage } from './types/binance'
+import {
+  Account,
+  Fees as BinanceFees,
+  TransactionResult,
+  TransferFee,
+  TxPage as BinanceTxPage,
+  Balance as BinanceBalance,
+} from './types/binance'
 import { BNB_DECIMAL, getPrefix, isAccount, isTransferFee, parseTx } from './util'
 
 type PrivKey = string
@@ -84,7 +93,8 @@ class Client extends BaseXChainClient implements BinanceClient, XChainClient {
    *
    * @throws {"Invalid phrase"} Thrown if the given phase is invalid.
    */
-  constructor({ network = 'testnet' }: XChainClientParams) {
+  constructor({ network = Network.Testnet }: XChainClientParams) {
+    super(Chain.Binance, { network })
     this.network = network
     this.bncClient = new BncClient(this.getClientUrl())
     this.bncClient.chooseNetwork(network)
@@ -265,7 +275,7 @@ class Client extends BaseXChainClient implements BinanceClient, XChainClient {
    * @returns {Account} account details of given address.
    */
   async getAccount(address?: Address, index = 0): Promise<Account> {
-    const accountAddress = address || this.getAddress(index)
+    const accountAddress = address || (await this.getAddress(index))
     const response = await this.bncClient.getAccount(accountAddress)
     if (!response || !response.result || !isAccount(response.result))
       return Promise.reject(Error(`Could not get account data for address ${accountAddress}`))
@@ -280,9 +290,9 @@ class Client extends BaseXChainClient implements BinanceClient, XChainClient {
    * @param {Asset} asset If not set, it will return all assets available. (optional)
    * @returns {Balance[]} The balance of the address.
    */
-  getBalance = async (address: Address, assets?: Asset[]): Promise<Balances> => {
+  getBalance = async (address: Address, assets?: Asset[]): Promise<Balance[]> => {
     try {
-      const balances: BinanceBalances = await this.bncClient.getBalance(address)
+      const balances: BinanceBalance[] = await this.bncClient.getBalance(address)
 
       let assetBalances = balances.map((balance) => {
         return {
