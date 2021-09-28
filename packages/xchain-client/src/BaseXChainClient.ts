@@ -107,7 +107,7 @@ export abstract class BaseXChainClient implements XChainClient {
    * @throws {"Invalid phrase"}
    * Thrown if the given phase is invalid.
    */
-  public setPhrase(phrase: string, walletIndex = 0): Address {
+  public setPhrase(phrase: string, walletIndex = 0): Promise<Address> {
     if (this.phrase !== phrase) {
       if (!validatePhrase(phrase)) {
         throw new Error('Invalid phrase')
@@ -137,7 +137,7 @@ export abstract class BaseXChainClient implements XChainClient {
   }
   //individual clients will need to implement these
   abstract getFees(): Promise<Fees>
-  abstract getAddress(walletIndex: number): string
+  abstract getAddress(walletIndex: number): Promise<string>
   abstract getExplorerUrl(): string
   abstract getExplorerAddressUrl(address: string): string
   abstract getExplorerTxUrl(txID: string): string

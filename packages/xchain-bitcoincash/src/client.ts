@@ -5,6 +5,7 @@ import {
   Fee,
   FeeRate,
   Network,
+  RootDerivationPaths,
   Tx,
   TxHash,
   TxHistoryParams,
@@ -18,20 +19,12 @@ import { getAccount, getSuggestedFee, getTransaction, getTransactions } from './
 import { broadcastTx } from './node-api'
 import { NodeAuth } from './types'
 import { KeyPair } from './types/bitcoincashjs-types'
-import { ClientUrl, FeeRates, FeesWithRates } from './types/client-types'
+import { ClientUrl } from './types/client-types'
 import * as utils from './utils'
 
 const BigInteger = require('bigi')
 const ENABLE_FAST = true
 
-/**
- * BitcoinCashClient Interface
- */
-interface _BitcoinCashClient {
-  getFeesWithRates(memo?: string): Promise<FeesWithRates>
-  getFeesWithMemo(memo: string): Promise<Fees>
-  getFeeRates(): Promise<FeeRates>
-}
 
 export type BitcoinCashClientParams = XChainClientParams & {
   haskoinUrl?: ClientUrl

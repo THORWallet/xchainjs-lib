@@ -1,4 +1,4 @@
-import { Address } from '@thorwallet/xchain-client/lib'
+import { Address, Network } from '@thorwallet/xchain-client/lib'
 import { BaseAmount, baseAmount } from '@thorwallet/xchain-util/lib'
 import axios from 'axios'
 import { BTC_DECIMAL } from './const'
@@ -49,7 +49,7 @@ export const getConfirmedUnspentTxs = async (address: string): Promise<UtxoData[
     allUtxos.map(async (tx: UtxoData) => {
       const { is_confirmed: isTxConfirmed } = await getIsTxConfirmed({
         sochainUrl: SOCHAIN_API_URL,
-        network: 'mainnet',
+        network: Network.Mainnet,
         hash: tx.txid,
       })
 

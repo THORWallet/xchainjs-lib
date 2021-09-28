@@ -10,7 +10,7 @@ export abstract class UTXOClient extends Client {
   async getFeesWithRates(memo?: string): Promise<FeesWithRates> {
     const rates = await this.getFeeRates()
     return {
-      fees: await calcFeesAsync(rates, this.calcFee.bind(this), memo),
+      fees: await calcFeesAsync(rates, (feeRate: number, memo?: string | undefined) => this.calcFee(feeRate, memo), memo),
       rates,
     }
   }

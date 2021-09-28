@@ -1,5 +1,5 @@
-import { Address, Network, TxParams } from '@thorwallet/xchain-client'
-import { FeeRate } from './client-types'
+import { Address, FeeRate, Network, TxParams } from '@thorwallet/xchain-client'
+import { OnlyRequired } from '@thorwallet/xchain-util'
 import { UTXO } from './common'
 
 export type LedgerTxInfo = {

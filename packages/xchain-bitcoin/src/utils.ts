@@ -2,6 +2,7 @@ import {
   Address,
   Balance,
   calcFees,
+  FeeOption,
   FeeRate,
   Fees,
   FeesWithRates,

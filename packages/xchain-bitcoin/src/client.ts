@@ -9,11 +9,12 @@ import {
   TxHistoryParams,
   TxParams,
   TxsPage,
+  TxType,
   UTXOClient,
   XChainClientParams,
 } from '@thorwallet/xchain-client'
 import { bip32, getSeed, validatePhrase } from '@thorwallet/xchain-crypto'
-import { assetAmount, AssetBTC, assetToBase } from '@thorwallet/xchain-util'
+import { assetAmount, AssetBTC, assetToBase, Chain } from '@thorwallet/xchain-util'
 import * as Bitcoin from 'bitcoinjs-lib'
 import { BTC_DECIMAL } from './const'
 import * as sochain from './sochain-api'
@@ -30,8 +31,7 @@ export type BitcoinClientParams = XChainClientParams & {
 class Client extends UTXOClient {
   private sochainUrl = ''
   private blockstreamUrl = ''
-  private rootDerivationPaths: RootDerivationPaths
-  private addrCache: Record<string, Record<number, string>>
+  addrCache: Record<string, Record<number, string>>
 
   /**
    * Constructor
@@ -50,7 +50,7 @@ class Client extends UTXOClient {
     phrase = '',
   }: BitcoinClientParams) {
     super(Chain.Bitcoin, { network, rootDerivationPaths, phrase })
-    this.net = network
+    this.setNetwork(network)
     this.addrCache = {}
     this.rootDerivationPaths = rootDerivationPaths
     this.setSochainUrl(sochainUrl)
@@ -118,7 +118,7 @@ class Client extends UTXOClient {
     if (!net) {
       throw new Error('Network must be provided')
     }
-    this.net = net
+    this.network = net
   }
 
   /**
@@ -127,7 +127,7 @@ class Client extends UTXOClient {
    * @returns {Network} The current network. (`mainnet` or `testnet`)
    */
   getNetwork = (): Network => {
-    return this.net
+    return this.network
   }
 
   /**
@@ -137,7 +137,7 @@ class Client extends UTXOClient {
    * @returns {string} The bitcoin derivation path based on the network.
    */
   getFullDerivationPath(index: number): string {
-    return this.rootDerivationPaths[this.net] + `${index}`
+    return this.rootDerivationPaths?.[this.getNetwork()] + `${index}`
   }
 
   /**
@@ -192,7 +192,7 @@ class Client extends UTXOClient {
       if (this.addrCache[this.phrase][index]) {
         return this.addrCache[this.phrase][index]
       }
-      const btcNetwork = Utils.btcNetwork(this.net)
+      const btcNetwork = Utils.btcNetwork(this.getNetwork())
       const btcKeys = await this.getBtcKeys(this.phrase, index)
 
       const { address } = Bitcoin.payments.p2wpkh({
@@ -220,7 +220,7 @@ class Client extends UTXOClient {
    * @throws {"Could not get private key from phrase"} Throws an error if failed creating BTC keys from the given phrase
    * */
   private getBtcKeys = async (phrase: string, index = 0): Promise<Bitcoin.ECPairInterface> => {
-    const btcNetwork = Utils.btcNetwork(this.net)
+    const btcNetwork = Utils.btcNetwork(this.getNetwork())
 
     const seed = await getSeed(phrase)
     const master = await (await bip32.fromSeed(seed, btcNetwork)).derivePath(this.getFullDerivationPath(index))
@@ -272,7 +272,7 @@ class Client extends UTXOClient {
       const response = await sochain.getAddress({
         address: params?.address + '',
         sochainUrl: this.sochainUrl,
-        network: this.net,
+        network: this.getNetwork(),
       })
       const total = response.txs.length
       const transactions: Tx[] = []
@@ -281,20 +281,20 @@ class Client extends UTXOClient {
       for (const txItem of txs) {
         const rawTx = await sochain.getTx({
           sochainUrl: this.sochainUrl,
-          network: this.net,
+          network: this.getNetwork(),
           hash: txItem.txid,
         })
         const tx: Tx = {
           asset: AssetBTC,
           from: rawTx.inputs.map((i) => ({
             from: i.address,
-            amount: assetToBase(assetAmount(i.value, Utils.BTC_DECIMAL)),
+            amount: assetToBase(assetAmount(i.value, BTC_DECIMAL)),
           })),
           to: rawTx.outputs
             .filter((i) => i.type !== 'nulldata')
-            .map((i) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, Utils.BTC_DECIMAL)) })),
+            .map((i) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, BTC_DECIMAL)) })),
           date: new Date(rawTx.time * 1000),
-          type: 'transfer',
+          type: TxType.Transfer,
           hash: rawTx.txid,
           binanceFee: null,
           confirmations: rawTx.confirmations,
@@ -334,6 +334,14 @@ class Client extends UTXOClient {
       date: new Date(rawTx.time * 1000),
       type: TxType.Transfer,
       hash: rawTx.txid,
+      binanceFee: null,
+      confirmations: rawTx.confirmations,
+      ethCumulativeGasUsed: null,
+      ethGas: null,
+      ethGasPrice: null,
+      ethGasUsed: null,
+      ethTokenName: null,
+      ethTokenSymbol: null,
     }
   }
 
@@ -369,7 +377,7 @@ class Client extends UTXOClient {
         feeRate,
         sender: await this.getAddress(fromAddressIndex),
         sochainUrl: this.sochainUrl,
-        network: this.net,
+        network: this.getNetwork(),
         spendPendingUTXO,
       })
 
@@ -378,7 +386,7 @@ class Client extends UTXOClient {
       psbt.finalizeAllInputs() // Finalise inputs
       const txHex = psbt.extractTransaction().toHex() // TX extracted and formatted to hex
 
-      return await Utils.broadcastTx({ network: this.net, txHex, blockstreamUrl: this.blockstreamUrl })
+      return await Utils.broadcastTx({ network: this.getNetwork(), txHex, blockstreamUrl: this.blockstreamUrl })
     } catch (e) {
       return Promise.reject(e)
     }

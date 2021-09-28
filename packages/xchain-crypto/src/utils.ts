@@ -1,6 +1,6 @@
 import RNSimple from 'react-native-simple-crypto'
 import ripemd160 from 'crypto-js/ripemd160'
-import * as bech32 from 'bech32'
+import { bech32 } from 'bech32'
 
 /**
  * Convert string to bytes.

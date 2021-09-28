@@ -1,7 +1,6 @@
 import { PrivKey } from '@thorwallet/cosmos-client'
 import {
   Address,
-  Network,
   Fees,
   Network,
   RootDerivationPaths,

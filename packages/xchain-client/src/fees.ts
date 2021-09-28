@@ -26,7 +26,7 @@ export function calcFees<T, U extends unknown[]>(
 
 export async function calcFeesAsync<T, U extends unknown[]>(
   feeRates: Record<FeeOption, T>,
-  calcFee: (feeRate: T, ...args: U) => Fee,
+  calcFee: (feeRate: T, ...args: U) => Promise<Fee>,
   ...args: U
 ): Promise<Fees> {
   return (
