@@ -1,4 +1,3 @@
-import { Network } from '@thorwallet/xchain-client'
 import { assetAmount, assetToBase, BaseAmount } from '@thorwallet/xchain-util'
 import axios from 'axios'
 import {
@@ -11,9 +10,13 @@ import {
   Transaction,
   TxHashParams,
 } from './types/sochain-api-types'
-import { LTC_DECIMAL } from './utils'
+export const LTC_DECIMAL = 8
 
 const DEFAULT_SUGGESTED_TRANSACTION_FEE = 1
+enum Network {
+  Mainnet = 'mainnet',
+  Testnet = 'testnet',
+}
 
 const toSochainNetwork = (network: Network): string => {
   switch (network) {

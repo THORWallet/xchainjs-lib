@@ -1,7 +1,10 @@
-import { Network } from '@thorwallet/xchain-client'
 import axios from 'axios'
 
 import { BroadcastTxParams } from './types/common'
+enum Network {
+  Mainnet = 'mainnet',
+  Testnet = 'testnet',
+}
 
 /**
  * Broadcast transaction.
@@ -18,6 +21,8 @@ export const broadcastTx = async ({ network, txHex, blockstreamUrl }: BroadcastT
         return `${blockstreamUrl}/api/tx`
       case Network.Testnet:
         return `${blockstreamUrl}/testnet/api/tx`
+      default:
+        throw new Error('no net')
     }
   })()
   const txid: string = (await axios.post(url, txHex)).data

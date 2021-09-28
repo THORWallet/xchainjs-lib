@@ -1,14 +1,10 @@
-import { PrivKey } from '@thorwallet/cosmos-client'
+import { AccAddress, PrivKey } from '@thorwallet/cosmos-client'
 import { StdTx } from '@thorwallet/cosmos-client/x/auth'
 import {
   Address,
-  DECIMAL,
+  Balance,
   Fees,
-  getAsset,
-  getPrefix,
-  MAX_TX_COUNT,
   Network,
-  registerCodecs,
   RootDerivationPaths,
   Tx,
   TxHash,
@@ -20,16 +16,23 @@ import {
 } from '@thorwallet/xchain-client'
 import { CosmosSDKClient, RPCTxResult } from '@thorwallet/xchain-cosmos'
 import * as xchainCrypto from '@thorwallet/xchain-crypto'
-import { Asset, assetFromString, AssetRuneNative, assetToString, baseAmount } from '@thorwallet/xchain-util'
-import axios from 'axios'
+import { Asset, AssetRuneNative, assetToString, baseAmount } from '@thorwallet/xchain-util'
 import { AssetRune, ClientUrl, DepositParam, ExplorerUrls, NodeUrl, ThorchainClientParams } from './types'
-import { MsgNativeTx, ThorchainDepositResponse } from './types/messages'
+import { msgNativeTxFromJson } from './types/messages'
 import {
+  buildDepositTx,
+  DEFAULT_GAS_VALUE,
+  getAsset,
   getChainId,
   getDefaultClientUrl,
   getDefaultExplorerUrls,
+  getDenomWithChain,
   getExplorerAddressUrl,
   getExplorerTxUrl,
+  getPrefix,
+  DECIMAL,
+  registerCodecs,
+  MAX_TX_COUNT,
 } from './util'
 
 /**
@@ -47,7 +50,7 @@ export interface ThorchainClient {
 /**
  * Custom Thorchain Client
  */
-class _Client implements ThorchainClient, XChainClient {
+class Client implements ThorchainClient, XChainClient {
   private network: Network
   private clientUrl: ClientUrl
   private explorerUrls: ExplorerUrls
@@ -90,8 +93,30 @@ class _Client implements ThorchainClient, XChainClient {
   transfer(_params: TxParams): Promise<string> {
     throw new Error('Method not implemented.')
   }
-  deposit(_params: DepositParam): Promise<string> {
-    throw new Error('Method not implemented.')
+  async deposit({ walletIndex = 0, asset = AssetRuneNative, amount, memo }: DepositParam): Promise<TxHash> {
+    const assetBalance = await this.getBalance(await this.getAddress(walletIndex), [asset])
+
+    if (assetBalance.length === 0 || assetBalance[0].amount.amount().lt(amount.amount().plus(DEFAULT_GAS_VALUE))) {
+      throw new Error('insufficient funds')
+    }
+
+    const signer = await this.getAddress(walletIndex)
+    const msgNativeTx = msgNativeTxFromJson({
+      coins: [
+        {
+          asset: getDenomWithChain(asset),
+          amount: amount.amount().toString(),
+        },
+      ],
+      memo,
+      signer,
+    })
+
+    const unsignedStdTx: StdTx = await buildDepositTx(msgNativeTx, this.getClientUrl().node)
+    const privateKey = this.getPrivateKey(walletIndex)
+    const accAddress = AccAddress.fromBech32(signer)
+
+    return (await this.cosmosClient.signAndBroadcast(unsignedStdTx, await privateKey, accAddress))?.txhash ?? ''
   }
   getTransactionData(_txId: string, _assetAddress?: string): Promise<Tx> {
     throw new Error('Method not implemented.')
@@ -282,7 +307,7 @@ class _Client implements ThorchainClient, XChainClient {
    * @param {Asset} asset If not set, it will return all assets available. (optional)
    * @returns {Balance[]} The balance of the address.
    */
-  getBalance = async (address: Address, assets?: Asset[]): Promise<Balances> => {
+  getBalance = async (address: Address, assets?: Asset[]): Promise<Balance[]> => {
     try {
       const balances = await this.cosmosClient.getBalance(address)
 
@@ -325,48 +350,7 @@ class _Client implements ThorchainClient, XChainClient {
     const txMinHeight = undefined
     const txMaxHeight = undefined
 
-    registerCodecs(this.network)
-
-    const txIncomingHistory = (
-      await this.cosmosClient.searchTxFromRPC({
-        rpcEndpoint: this.getClientUrl().rpc,
-        messageAction,
-        transferRecipient: address,
-        limit: MAX_TX_COUNT,
-        txMinHeight,
-        txMaxHeight,
-      })
-    ).txs
-    const txOutgoingHistory = (
-      await this.cosmosClient.searchTxFromRPC({
-        rpcEndpoint: this.getClientUrl().rpc,
-        messageAction,
-        transferSender: address,
-        limit: MAX_TX_COUNT,
-        txMinHeight,
-        txMaxHeight,
-      })
-    ).txs
-
-    let history: RPCTxResult[] = [...txIncomingHistory, ...txOutgoingHistory]
-      .sort((a, b) => {
-        if (a.height !== b.height) return parseInt(b.height) > parseInt(a.height) ? 1 : -1
-        if (a.hash !== b.hash) return a.hash > b.hash ? 1 : -1
-        return 0
-      })
-      .reduce(
-        (acc, tx) => [...acc, ...(acc.length === 0 || acc[acc.length - 1].hash !== tx.hash ? [tx] : [])],
-        [] as RPCTxResult[],
-      )
-      .filter(params?.filterFn ? params.filterFn : (tx) => tx)
-      .filter((_, index) => index < MAX_TX_COUNT)
-
-    // get `total` before filtering txs out for pagination
-    const total = history.length
-
-    history = history.filter((_, index) => index >= offset && index < offset + limit)
-
-    const txs = await Promise.all(history.map(({ hash }) => this.getTransactionData(hash, address)))
+    registerCodecs(getPrefix(this.network))
 
     const txIncomingHistory = (
       await this.cosmosClient.searchTxFromRPC({
@@ -414,49 +398,6 @@ class _Client implements ThorchainClient, XChainClient {
       txs,
     }
   }
-
-  /**
-   * Structure StdTx from MsgNativeTx.
-   *
-   * @param {string} txId The transaction id.
-   * @returns {Tx} The transaction details of the given transaction id.
-   *
-   * @throws {"Invalid client url"} Thrown if the client url is an invalid one.
-   */
-  private buildDepositTx = async (msgNativeTx: MsgNativeTx): Promise<StdTx> => {
-    const response: ThorchainDepositResponse = await axios
-      .post(`${this.getClientUrl().node}/thorchain/deposit`, {
-        coins: msgNativeTx.coins,
-        memo: msgNativeTx.memo,
-        base_req: {
-          chain_id: 'thorchain',
-          from: msgNativeTx.signer,
-        },
-      })
-      .then((response) => response.data)
-
-    if (!response || !response.value) {
-      throw new Error('Invalid client url')
-    }
-
-    const _unsignedStdTx = StdTx.fromJSON({
-      msg: response.value.msg,
-      fee: response.value.fee,
-      signatures: [],
-      memo: '',
-      asset: assetFromString(coin.asset),
-    })
-    to.push({
-      to: result.observed_tx.tx.to_address,
-      amount: baseAmount(coin.amount, DECIMAL),
-    })
-
-    return {
-      asset: asset || AssetRuneNative,
-      from,
-      to,
-      type: TxType.Transfer,
-      hash: txId,
-    }
-  }
 }
+
+export { Client }

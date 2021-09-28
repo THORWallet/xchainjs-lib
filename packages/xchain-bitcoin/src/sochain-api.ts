@@ -1,4 +1,3 @@
-import { Network } from '@thorwallet/xchain-client'
 import { assetAmount, assetToBase, BaseAmount } from '@thorwallet/xchain-util'
 import axios from 'axios'
 import { BTC_DECIMAL } from './const'
@@ -13,6 +12,10 @@ import {
   TxConfirmedStatus,
   TxHashParams,
 } from './types/sochain-api-types'
+enum Network {
+  Mainnet = 'mainnet',
+  Testnet = 'testnet',
+}
 
 const DEFAULT_SUGGESTED_TRANSACTION_FEE = 127
 

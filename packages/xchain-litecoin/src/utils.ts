@@ -6,7 +6,6 @@ import {
   FeeRate,
   Fees,
   FeesWithRates,
-  Network,
   standardFeeRates,
   TxHash,
   TxParams,
@@ -21,7 +20,10 @@ import * as sochain from './sochain-api'
 import { BroadcastTxParams, UTXO } from './types/common'
 import { AddressParams, LtcAddressUTXO } from './types/sochain-api-types'
 
-export const LTC_DECIMAL = 8
+export enum Network {
+  Mainnet = 'mainnet',
+  Testnet = 'testnet',
+}
 
 const TX_EMPTY_SIZE = 4 + 1 + 1 + 4 //10
 const TX_INPUT_BASE = 32 + 4 + 1 + 4 // 41
@@ -148,9 +150,9 @@ export const scanUTXOs = async (params: AddressParams): Promise<UTXO[]> => {
       ({
         hash: utxo.txid,
         index: utxo.output_no,
-        value: assetToBase(assetAmount(utxo.value, LTC_DECIMAL)).amount().toNumber(),
+        value: assetToBase(assetAmount(utxo.value, sochain.LTC_DECIMAL)).amount().toNumber(),
         witnessUtxo: {
-          value: assetToBase(assetAmount(utxo.value, LTC_DECIMAL)).amount().toNumber(),
+          value: assetToBase(assetAmount(utxo.value, sochain.LTC_DECIMAL)).amount().toNumber(),
           script: Buffer.from(utxo.script_hex, 'hex'),
         },
       } as UTXO),

@@ -1,5 +1,5 @@
 import { Network, Tx } from '@thorwallet/xchain-client/lib'
-import { Asset, BaseAmount } from '@thorwallet/xchain-util'
+import { Asset, BaseAmount, Chain } from '@thorwallet/xchain-util'
 
 export type NodeUrl = {
   node: string
@@ -29,6 +29,6 @@ export type DepositParam = {
 }
 
 export const THORChain = 'THOR'
-export const AssetRune: Asset = { chain: THORChain, symbol: 'RUNE', ticker: 'RUNE' }
+export const AssetRune: Asset = { chain: Chain.THORChain, symbol: 'RUNE', ticker: 'RUNE' }
 
 export type TxData = Pick<Tx, 'from' | 'to' | 'type'>

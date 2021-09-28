@@ -300,12 +300,12 @@ class Client extends UTXOClient {
           asset: AssetLTC,
           from: rawTx.inputs.map((i: TxIO) => ({
             from: i.address,
-            amount: assetToBase(assetAmount(i.value, Utils.LTC_DECIMAL)),
+            amount: assetToBase(assetAmount(i.value, sochain.LTC_DECIMAL)),
           })),
           to: rawTx.outputs
             // ignore tx with type 'nulldata'
             .filter((i: TxIO) => i.type !== 'nulldata')
-            .map((i: TxIO) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, Utils.LTC_DECIMAL)) })),
+            .map((i: TxIO) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, sochain.LTC_DECIMAL)) })),
           date: new Date(rawTx.time * 1000),
           type: TxType.Transfer,
           hash: rawTx.txid,
@@ -347,12 +347,12 @@ class Client extends UTXOClient {
       asset: AssetLTC,
       from: rawTx.inputs.map((i: TxIO) => ({
         from: i.address,
-        amount: assetToBase(assetAmount(i.value, Utils.LTC_DECIMAL)),
+        amount: assetToBase(assetAmount(i.value, sochain.LTC_DECIMAL)),
       })),
       to: rawTx.outputs
         // ignore tx with type 'nulldata'
         .filter((i: TxIO) => i.type !== 'nulldata')
-        .map((i: TxIO) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, Utils.LTC_DECIMAL)) })),
+        .map((i: TxIO) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, sochain.LTC_DECIMAL)) })),
       date: new Date(rawTx.time * 1000),
       type: TxType.Transfer,
       hash: rawTx.txid,
