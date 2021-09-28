@@ -1,4 +1,4 @@
-import { Fees, Network, singleFee } from '@thorwallet/xchain-client'
+import { Fees, FeeType, Network, singleFee } from '@thorwallet/xchain-client'
 import { assetAmount, assetToBase } from '@thorwallet/xchain-util'
 
 /**

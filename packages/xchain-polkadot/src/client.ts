@@ -8,16 +8,20 @@ import {
   Network,
   RootDerivationPaths,
   Tx,
+  TxHash,
   TxHistoryParams,
   TxParams,
   TxsPage,
   XChainClient,
   XChainClientParams,
+  singleFee,
+  FeeType,
+  TxType,
 } from '@thorwallet/xchain-client'
 import * as xchainCrypto from '@thorwallet/xchain-crypto'
-import { Asset, assetAmount, assetToBase, assetToString } from '@thorwallet/xchain-util'
+import { Asset, assetAmount, assetToBase, assetToString, baseAmount } from '@thorwallet/xchain-util'
 import axios from 'axios'
-import { Account, AssetDOT, Extrinsic, SubscanResponse, TransfersResult } from './types'
+import { Account, AssetDOT, Extrinsic, SubscanResponse, Transfer, TransfersResult } from './types'
 import { getDecimal, isSuccess } from './util'
 
 /**
@@ -58,11 +62,50 @@ class Client implements PolkadotClient, XChainClient {
   getFees(): Promise<Fees> {
     throw new Error('Method not implemented.')
   }
-  transfer(_params: TxParams): Promise<string> {
-    throw new Error('Method not implemented.')
+  async transfer(params: TxParams): Promise<TxHash> {
+    const api = await this.getAPI()
+    let transaction = null
+    const walletIndex = params.walletIndex || 0
+    // Createing a transfer
+    const transfer = api.tx.balances.transfer(params.recipient, params.amount.amount().toString())
+    if (!params.memo) {
+      // Send a simple transfer
+      transaction = transfer
+    } else {
+      // Send a `utility.batch` with two Calls: i) Balance.Transfer ii) System.Remark
+
+      // Creating a remark
+      const remark = api.tx.system.remark(params.memo)
+
+      // Send the Batch Transaction
+      transaction = api.tx.utility.batch([transfer, remark])
+    }
+
+    // Check balances
+    const paymentInfo = await transaction.paymentInfo(this.getKeyringPair(walletIndex))
+    const fee = baseAmount(paymentInfo.partialFee.toString(), getDecimal(this.network))
+    const balances = await this.getBalance(await this.getAddress(walletIndex), [AssetDOT])
+
+    if (!balances || params.amount.amount().plus(fee.amount()).isGreaterThan(balances[0].amount.amount())) {
+      throw new Error('insufficient balance')
+    }
+
+    const txHash = await transaction.signAndSend(this.getKeyringPair(walletIndex))
+    await api.disconnect()
+
+    return txHash.toString()
   }
-  estimateFees(_params: TxParams): Promise<Fees> {
-    throw new Error('Method not implemented.')
+  async estimateFees(params: TxParams): Promise<Fees> {
+    const walletIndex = params.walletIndex ? params.walletIndex : 0
+    const api = await this.getAPI()
+    const info = await api.tx.balances
+      .transfer(params.recipient, params.amount.amount().toNumber())
+      .paymentInfo(this.getKeyringPair(walletIndex))
+
+    const fee = baseAmount(info.partialFee.toString(), getDecimal(this.network))
+    await api.disconnect()
+
+    return singleFee(FeeType.PerByte, fee)
   }
   /**
    * Get getFullDerivationPath
@@ -356,7 +399,7 @@ class Client implements PolkadotClient, XChainClient {
           ethGasUsed: null,
           ethTokenName: null,
           ethTokenSymbol: null,
-        })),
+        })) as Tx[],
       }
     } catch (error) {
       return Promise.reject(error)
@@ -369,49 +412,40 @@ class Client implements PolkadotClient, XChainClient {
    * @param {string} txId The transaction id.
    * @returns {Tx} The transaction details of the given transaction id.
    */
-  getTransactionData = async (txId: string): Promise<Tx> => {
-    const response: SubscanResponse<Extrinsic> = await axios
-      .post(`${this.getClientUrl()}/api/scan/extrinsic`, {
-        hash: txId,
-      })
-      .then((res) => res.data)
+  async getTransactionData(txId: string): Promise<Tx> {
+    const response: SubscanResponse<Extrinsic> = (
+      await axios.post(`${this.getClientUrl()}/api/scan/extrinsic`, { hash: txId })
+    ).data
+    if (!isSuccess(response) || !response.data) throw new Error('Failed to get transactions')
 
-    if (!isSuccess(response) || !response.data) {
-      throw new Error('Failed to get transactions')
-    }
-
-    const transferResult: TransfersResult = response.data
+    const extrinsic: Extrinsic = response.data
+    const transfer: Transfer = extrinsic.transfer
 
     return {
-      total: transferResult.count,
-      txs: (transferResult.transfers || []).map((transfer) => {
-        return {
-          asset: AssetDOT,
-          from: [
-            {
-              from: transfer.from,
-              amount: assetToBase(assetAmount(transfer.amount, getDecimal(this.network))),
-            },
-          ],
-          to: [
-            {
-              to: transfer.to,
-              amount: assetToBase(assetAmount(transfer.amount, getDecimal(this.network))),
-            },
-          ],
-          date: new Date(extrinsic.block_timestamp * 1000),
-          type: 'transfer',
-          hash: extrinsic.extrinsic_hash,
-          binanceFee: null,
-          confirmations: null,
-          ethCumulativeGasUsed: null,
-          ethGas: null,
-          ethGasPrice: null,
-          ethGasUsed: null,
-          ethTokenName: null,
-          ethTokenSymbol: null,
-        }
-      }),
+      asset: AssetDOT,
+      from: [
+        {
+          from: transfer.from,
+          amount: assetToBase(assetAmount(transfer.amount, getDecimal(this.network))),
+        },
+      ],
+      to: [
+        {
+          to: transfer.to,
+          amount: assetToBase(assetAmount(transfer.amount, getDecimal(this.network))),
+        },
+      ],
+      date: new Date(extrinsic.block_timestamp * 1000),
+      type: TxType.Transfer,
+      hash: extrinsic.extrinsic_hash,
+      binanceFee: null,
+      confirmations: null,
+      ethCumulativeGasUsed: null,
+      ethGas: null,
+      ethGasPrice: null,
+      ethGasUsed: null,
+      ethTokenName: null,
+      ethTokenSymbol: null,
     }
   }
 }
