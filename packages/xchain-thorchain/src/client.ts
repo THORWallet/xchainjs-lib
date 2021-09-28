@@ -4,7 +4,6 @@ import {
   Address,
   DECIMAL,
   Fees,
-  FeesParams,
   getAsset,
   getPrefix,
   MAX_TX_COUNT,
@@ -97,7 +96,7 @@ class _Client implements ThorchainClient, XChainClient {
   getTransactionData(_txId: string, _assetAddress?: string): Promise<Tx> {
     throw new Error('Method not implemented.')
   }
-  getFees(_params?: FeesParams): Promise<Fees> {
+  getFees(): Promise<Fees> {
     throw new Error('Method not implemented.')
   }
 

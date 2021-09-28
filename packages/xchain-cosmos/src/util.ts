@@ -1,7 +1,7 @@
 import { codec, Msg } from '@thorwallet/cosmos-client'
 import { StdTx } from '@thorwallet/cosmos-client/x/auth'
 import { MsgMultiSend, MsgSend } from '@thorwallet/cosmos-client/x/bank'
-import { Fees, Tx, TxFrom, Txs, TxTo } from '@thorwallet/xchain-client'
+import { Fees, FeeType, Tx, TxFrom, TxTo, TxType } from '@thorwallet/xchain-client'
 import { Asset, assetToString, baseAmount } from '@thorwallet/xchain-util'
 import { APIQueryParam, RawTxResponse, TxResponse } from './cosmos/types'
 import { AssetAtom, AssetMuon } from './types'
@@ -161,7 +161,7 @@ export const getTxsFromHistory = (txs: TxResponse[], mainAsset: Asset): Tx[] => 
       from,
       to,
       date: new Date(tx.timestamp),
-      type: from.length > 0 || to.length > 0 ? 'transfer' : 'unknown',
+      type: from.length > 0 || to.length > 0 ? TxType.Transfer : TxType.Unknown,
       hash: tx.txhash || '',
       binanceFee: null,
       confirmations: null,
@@ -173,7 +173,7 @@ export const getTxsFromHistory = (txs: TxResponse[], mainAsset: Asset): Tx[] => 
       ethTokenSymbol: null,
     }
     return [...acc, val] as Tx[]
-  }, [] as Txs)
+  }, [] as Tx[])
 }
 
 /**

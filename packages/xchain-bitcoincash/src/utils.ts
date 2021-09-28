@@ -12,6 +12,7 @@ import {
   TxFrom,
   TxParams,
   TxTo,
+  TxType,
 } from '@thorwallet/xchain-client'
 import { AssetBCH, BaseAmount, baseAmount } from '@thorwallet/xchain-util/lib'
 import * as bchaddr from 'bchaddrjs'

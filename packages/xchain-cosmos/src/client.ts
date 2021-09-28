@@ -1,6 +1,7 @@
 import { PrivKey } from '@thorwallet/cosmos-client'
 import {
   Address,
+  Balance,
   Fees,
   Network,
   RootDerivationPaths,
@@ -11,13 +12,12 @@ import {
   TxsPage,
   XChainClient,
   XChainClientParams,
-  FeesParams,
 } from '@thorwallet/xchain-client'
 import * as xchainCrypto from '@thorwallet/xchain-crypto'
 import { Asset, assetToString, baseAmount } from '@thorwallet/xchain-util'
 import { CosmosSDKClient } from './cosmos/sdk-client'
 import { AssetAtom, AssetMuon } from './types'
-import { DECIMAL, getAsset, getDenom, getTxsFromHistory } from './util'
+import { DECIMAL, getAsset, getDenom, getTxsFromHistory, registerCodecs } from './util'
 
 /**
  * Interface for custom Cosmos client
@@ -69,7 +69,7 @@ class Client implements CosmosClient, XChainClient {
     this.sdkClients.set(Network.Mainnet, MAINNET_SDK)
     this.addrCache = {}
   }
-  getFees(_params?: FeesParams): Promise<Fees> {
+  getFees(): Promise<Fees> {
     throw new Error('Method not implemented.')
   }
 
@@ -241,7 +241,7 @@ class Client implements CosmosClient, XChainClient {
    * @param {Asset} asset If not set, it will return all assets available. (optional)
    * @returns {Balance[]} The balance of the address.
    */
-  getBalance = async (address: Address, assets?: Asset[]): Promise<Balances> => {
+  getBalance = async (address: Address, assets?: Asset[]): Promise<Balance[]> => {
     try {
       const balances = await this.getSDKClient().getBalance(address)
       const mainAsset = this.getMainAsset()
@@ -285,7 +285,7 @@ class Client implements CosmosClient, XChainClient {
     const txMinHeight = undefined
     const txMaxHeight = undefined
 
-    this.registerCodecs()
+    registerCodecs()
 
     const mainAsset = this.getMainAsset()
     const txHistory = await this.getSDKClient().searchTx({
@@ -325,7 +325,7 @@ class Client implements CosmosClient, XChainClient {
    */
   transfer = async ({ walletIndex, asset, amount, recipient, memo }: TxParams): Promise<TxHash> => {
     const fromAddressIndex = walletIndex || 0
-    this.registerCodecs()
+    registerCodecs()
 
     const mainAsset = this.getMainAsset()
     const transferResult = await this.getSDKClient().transfer({

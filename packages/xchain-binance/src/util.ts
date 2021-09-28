@@ -1,4 +1,4 @@
-import { Fees, Network, singleFee, Tx, TxType } from '@thorwallet/xchain-client'
+import { Fees, FeeType, Network, singleFee, Tx, TxType } from '@thorwallet/xchain-client'
 import { assetAmount, AssetBNB, assetFromString, assetToBase, baseAmount } from '@thorwallet/xchain-util'
 import { Account, DexFees, Fee, TransferFee, Tx as BinanceTx, TxType as BinanceTxType } from './types/binance'
 import { Transfer, TransferEvent } from './types/binance-ws'

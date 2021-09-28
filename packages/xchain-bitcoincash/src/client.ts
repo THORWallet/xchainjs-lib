@@ -5,7 +5,6 @@ import {
   Fee,
   FeeRate,
   Network,
-  RootDerivationPaths,
   Tx,
   TxHash,
   TxHistoryParams,
@@ -15,6 +14,7 @@ import {
   XChainClientParams,
 } from '@thorwallet/xchain-client'
 import { bip32, getSeed, validatePhrase } from '@thorwallet/xchain-crypto'
+import { Chain } from '@thorwallet/xchain-util/lib'
 import { getAccount, getSuggestedFee, getTransaction, getTransactions } from './haskoin-api'
 import { broadcastTx } from './node-api'
 import { NodeAuth } from './types'
@@ -24,7 +24,6 @@ import * as utils from './utils'
 
 const BigInteger = require('bigi')
 const ENABLE_FAST = true
-
 
 export type BitcoinCashClientParams = XChainClientParams & {
   haskoinUrl?: ClientUrl
@@ -40,7 +39,6 @@ class Client extends UTXOClient {
   private haskoinUrl: ClientUrl
   private nodeUrl: ClientUrl
   private nodeAuth?: NodeAuth
-  private rootDerivationPaths: RootDerivationPaths
   private addrCache: Record<string, Record<number, string>>
 
   /**
@@ -68,7 +66,7 @@ class Client extends UTXOClient {
       [Network.Testnet]: `m/44'/1'/0'/0/`,
     },
   }: BitcoinCashClientParams) {
-    super(Chain.BitcoinCash, { network, rootDerivationPaths, phrase })
+    super(Chain.BitcoinCash, { network, rootDerivationPaths })
     this.network = network
     this.haskoinUrl = haskoinUrl
     this.nodeUrl = nodeUrl
@@ -345,10 +343,10 @@ class Client extends UTXOClient {
   transfer = async (params: TxParams & { feeRate?: FeeRate }): Promise<TxHash> => {
     try {
       const index = params.walletIndex || 0
-      const derivationPath = this.rootDerivationPaths[this.network] + `${index}`
+      const derivationPath = this.rootDerivationPaths?.[this.network] + `${index}`
 
       const feeRate = params.feeRate || (await this.getFeeRates()).fast
-      const { builder, inputUTXOs } = await utils.buildTx({
+      const { builder, utxos } = await utils.buildTx({
         ...params,
         feeRate,
         sender: await this.getAddress(),
@@ -358,7 +356,7 @@ class Client extends UTXOClient {
 
       const keyPair = await this.getBCHKeys(this.phrase, derivationPath)
 
-      inputUTXOs.forEach((utxo, index) => {
+      utxos.forEach((utxo, index) => {
         builder.sign(index, keyPair, undefined, 0x41, utxo.witnessUtxo.value)
       })
 

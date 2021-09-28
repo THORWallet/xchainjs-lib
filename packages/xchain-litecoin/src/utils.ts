@@ -2,7 +2,10 @@ import {
   Address,
   Balance,
   calcFees,
+  FeeOption,
+  FeeRate,
   Fees,
+  FeesWithRates,
   Network,
   standardFeeRates,
   TxHash,
@@ -15,7 +18,6 @@ import accumulative from 'coinselect/accumulative'
 import { MIN_TX_FEE } from './const'
 import * as nodeApi from './node-api'
 import * as sochain from './sochain-api'
-import { FeeRate, FeesWithRates } from './types/client-types'
 import { BroadcastTxParams, UTXO } from './types/common'
 import { AddressParams, LtcAddressUTXO } from './types/sochain-api-types'
 

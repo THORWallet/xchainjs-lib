@@ -5,7 +5,6 @@ import {
   Address,
   Balance,
   Fees,
-  FeesParams,
   Network,
   RootDerivationPaths,
   Tx,
@@ -56,7 +55,7 @@ class Client implements PolkadotClient, XChainClient {
     this.rootDerivationPaths = rootDerivationPaths
     this.addrCache = {}
   }
-  getFees(_params?: FeesParams): Promise<Fees> {
+  getFees(): Promise<Fees> {
     throw new Error('Method not implemented.')
   }
   transfer(_params: TxParams): Promise<string> {

@@ -9,6 +9,7 @@ import {
   TxHistoryParams,
   TxParams,
   TxsPage,
+  TxType,
   UTXOClient,
   XChainClientParams,
 } from '@thorwallet/xchain-client'
@@ -33,7 +34,6 @@ class Client extends UTXOClient {
   private sochainUrl = ''
   private nodeUrl = ''
   private nodeAuth?: NodeAuth
-  private rootDerivationPaths: RootDerivationPaths
   private addrCache: Record<string, Record<number, string>>
 
   /**
@@ -56,7 +56,7 @@ class Client extends UTXOClient {
       [Network.Testnet]: `m/84'/1'/0'/0/`,
     },
   }: LitecoinClientParams) {
-    super(Chain.Litecoin, { network, rootDerivationPaths, phrase })
+    super(Chain.Litecoin, { network, rootDerivationPaths })
     this.nodeUrl =
       nodeUrl ??
       (() => {
@@ -128,7 +128,7 @@ class Client extends UTXOClient {
     if (!net) {
       throw new Error('Network must be provided')
     } else {
-      this.net = net
+      this.network = net
     }
   }
 
@@ -138,7 +138,7 @@ class Client extends UTXOClient {
    * @returns {Network} The current network. (`mainnet` or `testnet`)
    */
   getNetwork = (): Network => {
-    return this.net
+    return this.network
   }
 
   /**
@@ -148,7 +148,7 @@ class Client extends UTXOClient {
    * @returns {string} The bitcoin derivation path based on the network.
    */
   getFullDerivationPath(index: number): string {
-    return this.rootDerivationPaths[this.net] + `${index}`
+    return this.rootDerivationPaths?.[this.network] + `${index}`
   }
 
   /**
@@ -204,7 +204,7 @@ class Client extends UTXOClient {
       if (this.addrCache[this.phrase][index]) {
         return this.addrCache[this.phrase][index]
       }
-      const ltcNetwork = Utils.ltcNetwork(this.net)
+      const ltcNetwork = Utils.ltcNetwork(this.network)
       const ltcKeys = await this.getLtcKeys(this.phrase, index)
 
       const { address } = Litecoin.payments.p2wpkh({
@@ -233,7 +233,7 @@ class Client extends UTXOClient {
    * @throws {"Could not get private key from phrase"} Throws an error if failed creating LTC keys from the given phrase
    * */
   private getLtcKeys = async (phrase: string, index = 0): Promise<Litecoin.ECPairInterface> => {
-    const ltcNetwork = Utils.ltcNetwork(this.net)
+    const ltcNetwork = Utils.ltcNetwork(this.network)
 
     const seed = await getSeed(phrase)
     const master = await (await bip32.fromSeed(seed, ltcNetwork)).derivePath(this.getFullDerivationPath(index))
@@ -283,7 +283,7 @@ class Client extends UTXOClient {
     try {
       const response = await sochain.getAddress({
         sochainUrl: this.sochainUrl,
-        network: this.net,
+        network: this.network,
         address: `${params?.address}`,
       })
       const total = response.txs.length
@@ -293,7 +293,7 @@ class Client extends UTXOClient {
       for (const txItem of txs) {
         const rawTx = await sochain.getTx({
           sochainUrl: this.sochainUrl,
-          network: this.net,
+          network: this.network,
           hash: txItem.txid,
         })
         const tx: Tx = {
@@ -307,7 +307,7 @@ class Client extends UTXOClient {
             .filter((i: TxIO) => i.type !== 'nulldata')
             .map((i: TxIO) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, Utils.LTC_DECIMAL)) })),
           date: new Date(rawTx.time * 1000),
-          type: 'transfer',
+          type: TxType.Transfer,
           hash: rawTx.txid,
           binanceFee: null,
           confirmations: rawTx.confirmations,
@@ -365,32 +365,7 @@ class Client extends UTXOClient {
       ethTokenName: null,
       ethTokenSymbol: null,
     }
-    transactions.push(tx)
-
-    const result: TxsPage = {
-      total,
-      txs: transactions,
-    }
-    return result
-  }
-
-  async getTransactionData(txId: string): Promise<Tx> {
-    const rawTx = await sochain.getTx({
-      sochainUrl: this.sochainUrl,
-      network: this.network,
-      hash: txId,
-    })
-    return {
-      asset: AssetLTC,
-      from: rawTx.inputs.map((i) => ({
-        from: i.address,
-        amount: assetToBase(assetAmount(i.value, Utils.LTC_DECIMAL)),
-      })),
-      to: rawTx.outputs.map((i) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, Utils.LTC_DECIMAL)) })),
-      date: new Date(rawTx.time * 1000),
-      type: TxType.Transfer,
-      hash: rawTx.txid,
-    }
+    return tx
   }
 
   protected async getSuggestedFeeRate(): Promise<FeeRate> {
@@ -416,7 +391,7 @@ class Client extends UTXOClient {
         feeRate,
         sender: await this.getAddress(fromAddressIndex),
         sochainUrl: this.sochainUrl,
-        network: this.net,
+        network: this.network,
       })
       const ltcKeys = this.getLtcKeys(this.phrase, fromAddressIndex)
       psbt.signAllInputs(await ltcKeys) // Sign all inputs
@@ -424,7 +399,7 @@ class Client extends UTXOClient {
       const txHex = psbt.extractTransaction().toHex() // TX extracted and formatted to hex
 
       return await Utils.broadcastTx({
-        network: this.net,
+        network: this.network,
         txHex,
         nodeUrl: this.nodeUrl,
         auth: this.nodeAuth,

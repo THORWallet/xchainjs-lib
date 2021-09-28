@@ -71,7 +71,7 @@ export interface BinanceClient {
  */
 class Client extends BaseXChainClient implements BinanceClient, XChainClient {
   private bncClient: BncClient
-  private phrase = ''
+  phrase = ''
   private addrCache: Record<string, Record<number, string>>
 
   /**
