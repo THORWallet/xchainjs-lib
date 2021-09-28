@@ -1,8 +1,7 @@
 import { PrivKey } from '@thorwallet/cosmos-client'
 import {
   Address,
-  Balance,
-Network,
+  Network,
   Fees,
   Network,
   RootDerivationPaths,
@@ -13,15 +12,13 @@ Network,
   TxsPage,
   XChainClient,
   XChainClientParams,
-  FeesParams
+  FeesParams,
 } from '@thorwallet/xchain-client'
 import * as xchainCrypto from '@thorwallet/xchain-crypto'
 import { Asset, assetToString, baseAmount } from '@thorwallet/xchain-util'
 import { CosmosSDKClient } from './cosmos/sdk-client'
 import { AssetAtom, AssetMuon } from './types'
 import { DECIMAL, getAsset, getDenom, getTxsFromHistory } from './util'
-
-
 
 /**
  * Interface for custom Cosmos client
@@ -62,7 +59,6 @@ class Client implements CosmosClient, XChainClient {
    */
   constructor({
     network = Network.Testnet,
-    phrase,
     rootDerivationPaths = {
       [Network.Mainnet]: `44'/118'/0'/0/`,
       [Network.Testnet]: `44'/118'/1'/0/`,
@@ -70,11 +66,11 @@ class Client implements CosmosClient, XChainClient {
   }: XChainClientParams) {
     this.network = network
     this.rootDerivationPaths = rootDerivationPaths
-this.sdkClients.set(Network.Testnet, TESTNET_SDK)
-this.sdkClients.set(Network.Mainnet, MAINNET_SDK)
-this.addrCache = {}
+    this.sdkClients.set(Network.Testnet, TESTNET_SDK)
+    this.sdkClients.set(Network.Mainnet, MAINNET_SDK)
+    this.addrCache = {}
   }
-  getFees(params?: FeesParams): Promise<Fees> {
+  getFees(_params?: FeesParams): Promise<Fees> {
     throw new Error('Method not implemented.')
   }
 
@@ -290,23 +286,22 @@ this.addrCache = {}
     const txMinHeight = undefined
     const txMaxHeight = undefined
 
-      this.registerCodecs()
+    this.registerCodecs()
 
-      const mainAsset = this.getMainAsset()
-      const txHistory = await this.getSDKClient().searchTx({
-        messageAction,
-        messageSender: (params && params.address) || (await this.getAddress()),
-        page,
-        limit,
-        txMinHeight,
-        txMaxHeight,
-      })
-
+    const mainAsset = this.getMainAsset()
+    const txHistory = await this.getSDKClient().searchTx({
+      messageAction,
+      messageSender: (params && params.address) || (await this.getAddress()),
+      page,
+      limit,
+      txMinHeight,
+      txMaxHeight,
+    })
 
     return {
       total: parseInt(txHistory.total_count?.toString() || '0'),
       txs: getTxsFromHistory(txHistory.txs || [], mainAsset),
-    } 
+    }
   }
 
   /**
@@ -330,23 +325,21 @@ this.addrCache = {}
    * @returns {TxHash} The transaction hash.
    */
   transfer = async ({ walletIndex, asset, amount, recipient, memo }: TxParams): Promise<TxHash> => {
-    try {
-      const fromAddressIndex = walletIndex || 0
-      this.registerCodecs()
+    const fromAddressIndex = walletIndex || 0
+    this.registerCodecs()
 
-      const mainAsset = this.getMainAsset()
-      const transferResult = await this.getSDKClient().transfer({
-        privkey: await this.getPrivateKey(fromAddressIndex),
-        from: await this.getAddress(fromAddressIndex),
-        to: recipient,
-        amount: amount.amount().toString(),
-        asset: getDenom(asset || mainAsset),
-        memo,
-      })
+    const mainAsset = this.getMainAsset()
+    const transferResult = await this.getSDKClient().transfer({
+      privkey: await this.getPrivateKey(fromAddressIndex),
+      from: await this.getAddress(fromAddressIndex),
+      to: recipient,
+      amount: amount.amount().toString(),
+      asset: getDenom(asset || mainAsset),
+      memo,
+    })
 
     return transferResult?.txhash || ''
   }
-
-}}
+}
 
 export { Client }

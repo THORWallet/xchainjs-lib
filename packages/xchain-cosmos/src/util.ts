@@ -6,8 +6,6 @@ import { Asset, assetToString, baseAmount } from '@thorwallet/xchain-util'
 import { APIQueryParam, RawTxResponse, TxResponse } from './cosmos/types'
 import { AssetAtom, AssetMuon } from './types'
 
-
-
 /**
  * The decimal for cosmos chain.
  */

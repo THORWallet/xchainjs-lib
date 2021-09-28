@@ -1,7 +1,6 @@
-import { Address, Network } from '@thorwallet/xchain-client/lib'
+import { Address } from '@thorwallet/xchain-client/lib'
 import { BaseAmount, baseAmount } from '@thorwallet/xchain-util/lib'
 import axios from 'axios'
-
 import { BTC_DECIMAL } from './const'
 import { getIsTxConfirmed } from './sochain-api'
 

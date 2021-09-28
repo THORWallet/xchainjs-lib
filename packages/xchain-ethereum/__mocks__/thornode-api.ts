@@ -1,4 +1,4 @@
-import { Chain } from '@xchainjs/xchain-util'
+import { Chain } from '@thorwallet/xchain-util'
 import nock from 'nock'
 
 type InboundAddress = {

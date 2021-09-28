@@ -1,29 +1,22 @@
-
-import * as bchaddr from 'bchaddrjs'
-import coininfo from 'coininfo'
-import { Address, Balance, Fees, Network, Tx, TxFrom, TxParams, TxTo } from '@thorwallet/xchain-client'
-import { AssetBCH, BaseAmount, baseAmount } from '@thorwallet/xchain-util/lib'
 import * as bitcash from '@psf/bitcoincashjs-lib'
 import {
   Address,
   Balance,
+  calcFees,
   FeeRate,
   Fees,
   FeesWithRates,
   Network,
+  standardFeeRates,
   Tx,
   TxFrom,
   TxParams,
   TxTo,
-  TxType,
-  calcFees,
-  standardFeeRates,
-} from '@xchainjs/xchain-client'
-import { AssetBCH, BaseAmount, baseAmount } from '@xchainjs/xchain-util'
+} from '@thorwallet/xchain-client'
+import { AssetBCH, BaseAmount, baseAmount } from '@thorwallet/xchain-util/lib'
 import * as bchaddr from 'bchaddrjs'
 import coininfo from 'coininfo'
 import accumulative from 'coinselect/accumulative'
-
 import { getAccount, getRawTransaction, getUnspentTransactions } from './haskoin-api'
 import { AddressParams, Transaction, TransactionInput, TransactionOutput, UTXO } from './types'
 import { Network as BCHNetwork, TransactionBuilder } from './types/bitcoincashjs-types'

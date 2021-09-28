@@ -1,7 +1,6 @@
-import { Network } from '@xchainjs/xchain-client'
-import { BaseAmount, assetAmount, assetToBase } from '@xchainjs/xchain-util'
+import { Network } from '@thorwallet/xchain-client'
+import { assetAmount, assetToBase, BaseAmount } from '@thorwallet/xchain-util'
 import axios from 'axios'
-
 import { BTC_DECIMAL } from './const'
 import {
   AddressParams,
@@ -14,8 +13,6 @@ import {
   TxConfirmedStatus,
   TxHashParams,
 } from './types/sochain-api-types'
-import { assetToBase, assetAmount, BaseAmount } from '@thorwallet/xchain-util'
-import { BTC_DECIMAL } from './utils'
 
 const DEFAULT_SUGGESTED_TRANSACTION_FEE = 127
 

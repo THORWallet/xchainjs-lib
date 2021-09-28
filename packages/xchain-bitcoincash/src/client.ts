@@ -3,7 +3,6 @@ import {
   Address,
   Balance,
   Fee,
-  FeeOption,
   FeeRate,
   Network,
   Tx,
@@ -14,13 +13,13 @@ import {
   UTXOClient,
   XChainClientParams,
 } from '@thorwallet/xchain-client'
-
-import { validatePhrase, getSeed, bip32 } from '@thorwallet/xchain-crypto'
-import { FeesWithRates, FeeRate, FeeRates, ClientUrl } from './types/client-types'
-import { KeyPair } from './types/bitcoincashjs-types'
-import { getTransaction, getAccount, getTransactions, getSuggestedFee } from './haskoin-api'
-import { NodeAuth } from './types'
+import { bip32, getSeed, validatePhrase } from '@thorwallet/xchain-crypto'
+import { getAccount, getSuggestedFee, getTransaction, getTransactions } from './haskoin-api'
 import { broadcastTx } from './node-api'
+import { NodeAuth } from './types'
+import { KeyPair } from './types/bitcoincashjs-types'
+import { ClientUrl, FeeRates, FeesWithRates } from './types/client-types'
+import * as utils from './utils'
 
 const BigInteger = require('bigi')
 const ENABLE_FAST = true
@@ -28,20 +27,11 @@ const ENABLE_FAST = true
 /**
  * BitcoinCashClient Interface
  */
-interface BitcoinCashClient {
+interface _BitcoinCashClient {
   getFeesWithRates(memo?: string): Promise<FeesWithRates>
   getFeesWithMemo(memo: string): Promise<Fees>
   getFeeRates(): Promise<FeeRates>
 }
-import { getSeed } from '@xchainjs/xchain-crypto'
-import { Chain } from '@xchainjs/xchain-util'
-
-import { getAccount, getSuggestedFee, getTransaction, getTransactions } from './haskoin-api'
-import { broadcastTx } from './node-api'
-import { NodeAuth } from './types'
-import { KeyPair } from './types/bitcoincashjs-types'
-import { ClientUrl } from './types/client-types'
-import * as utils from './utils'
 
 export type BitcoinCashClientParams = XChainClientParams & {
   haskoinUrl?: ClientUrl
@@ -287,9 +277,6 @@ class Client extends UTXOClient {
     throw new Error('Phrase must be provided')
   }
 
-      return utils.stripPrefix(utils.toCashAddress(address))
-    }  }
-
   /**
    * Validate the given address.
    *
@@ -300,15 +287,7 @@ class Client extends UTXOClient {
     return utils.validateAddress(address, this.network)
   }
 
-  /**
-   * Get the BCH balance of a given address.
-   *
-   * @param {Address} address By default, it will return the balance of the current wallet. (optional)
-   * @returns {Balance[]} The BCH balance of the address.
-   *
-   * @throws {"Invalid address"} Thrown if the given address is an invalid address.
-   */
-  async getBalance(address: Address): Promise<Balance[]> {
+  getBalance(address: Address): Promise<Balance[]> {
     return utils.getBalance({ haskoinUrl: this.getHaskoinURL(), address })
   }
 

@@ -1,4 +1,4 @@
-import { Address, FeeOptionKey, Fees, Network } from '@thorwallet/xchain-client'
+import { Address, Network } from '@thorwallet/xchain-client'
 
 export type NormalTxParams = { addressTo: Address; amount: number; feeRate: FeeRate }
 export type VaultTxParams = NormalTxParams & { memo: string }

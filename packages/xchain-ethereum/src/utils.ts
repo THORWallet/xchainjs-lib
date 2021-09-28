@@ -1,24 +1,21 @@
-import { Balances, Fees, Network as XChainNetwork, Tx } from '@thorwallet/xchain-client'
+import { Fees, Tx } from '@thorwallet/xchain-client'
 import {
   Asset,
-  AssetETH,
-  BaseAmount,
-  Chain,
   assetAmount,
+  AssetETH,
   assetFromString,
   assetToBase,
   assetToString,
+  BaseAmount,
   baseAmount,
-
 } from '@thorwallet/xchain-util'
-import { ethers, BigNumber, providers } from 'ethers'
+import { BigNumber, ethers, providers } from 'ethers'
 import { parseUnits } from 'ethers/lib/utils'
-
 import erc20ABI from './data/erc20.json'
 import {
   Address,
-  ETHTransactionInfo,
   EthNetwork,
+  ETHTransactionInfo,
   FeesWithGasPricesAndLimits,
   GasPrices,
   TokenBalance,

@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-use-before-define */
 // @ts-expect-error no types
+import RNSimple from 'react-native-simple-crypto'
 import bs58check from 'bs58check'
 import ecc from 'tiny-secp256k1'
-// @ts-expect-error no types
 import typeforce from 'typeforce'
 import wif from 'wif'
-// @ts-expect-error upstream
 import { NativeModules } from 'react-native'
-import RNSimple from 'react-native-simple-crypto'
 
 const createHash = require('create-hash')
 

@@ -1,6 +1,5 @@
-import { FeeType } from '@xchainjs/xchain-client'
-import { baseAmount } from '@xchainjs/xchain-util'
-
+import { FeeType } from '@thorwallet/xchain-client'
+import { baseAmount } from '@thorwallet/xchain-util'
 import { DexFees, Fee, TransferFee, Tx as BinanceTx } from '../src/types/binance'
 import { Transfer, TransferEvent } from '../src/types/binance-ws'
 import {
@@ -12,9 +11,6 @@ import {
   isTransferFee,
   parseTx,
 } from '../src/util'
-import { TransferEvent, Transfer } from '../src/types/binance-ws'
-import { DexFees, Fee, TransferFee, Tx as BinanceTx } from '../src/types/binance'
-import { baseAmount } from '@thorwallet/xchain-util'
 
 describe('binance/util', () => {
   describe('getHashFromTransfer', () => {

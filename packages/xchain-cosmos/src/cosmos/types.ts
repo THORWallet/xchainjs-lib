@@ -3,7 +3,6 @@ import { StdTxFee } from '@thorwallet/cosmos-client/api'
 import { BaseAccount, StdTx } from '@thorwallet/cosmos-client/x/auth'
 import { BigSource } from 'big.js'
 
-
 export type CosmosSDKClientParams = {
   server: string
   chainId: string

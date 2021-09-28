@@ -1,9 +1,8 @@
-import * as bip39 from 'bip39'
 import crypto from 'crypto'
+import * as bip39 from 'bip39'
 import { blake256 } from 'foundry-primitives'
 import { v4 as uuidv4 } from 'uuid'
 import { generateMnemonic, mnemonicToSeed, validateMnemonic } from './bip39'
-
 import { pbkdf2Async } from './utils'
 
 // Constants

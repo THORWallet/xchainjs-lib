@@ -1,28 +1,17 @@
 import { Network } from '@thorwallet/xchain-client'
-import { AssetRuneNative, assetAmount, assetToBase } from '@thorwallet/xchain-util'
-
+import { assetAmount, AssetRuneNative, assetToBase } from '@thorwallet/xchain-util'
 import {
   getAsset,
   getDefaultExplorerUrls,
   getDenom,
   getDenomWithChain,
-  getAsset,
-  isBroadcastSuccess,
-  getExplorerAddressUrl,
-  getExplorerTxUrl,
-  getExplorerUrl,
-  getDefaultExplorerUrls,
-  getDepositTxDataFromLogs,
-  getTxType,
   getDepositTxDataFromLogs,
   getExplorerAddressUrl,
   getExplorerTxUrl,
   getExplorerUrl,
   getTxType,
   isBroadcastSuccess,
-
 } from '../src/util'
-import { assetAmount, assetToBase } from '@thorwallet/xchain-util'
 
 describe('thorchain/util', () => {
   describe('Denom <-> Asset', () => {

@@ -1,28 +1,18 @@
-import * as Bitcoin from 'bitcoinjs-lib' // https://github.com/bitcoinjs/bitcoinjs-lib
-import * as sochain from './sochain-api'
-import * as blockStream from './blockstream-api'
-import { Address, Balance, Fees, Network, TxHash, TxParams } from '@thorwallet/xchain-client'
-import { assetAmount, AssetBTC, assetToBase, BaseAmount, baseAmount } from '@thorwallet/xchain-util'
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import {
   Address,
   Balance,
-  FeeOption,
+  calcFees,
   FeeRate,
   Fees,
   FeesWithRates,
   Network,
+  standardFeeRates,
   TxHash,
   TxParams,
-  calcFees,
-  standardFeeRates,
 } from '@thorwallet/xchain-client'
-import { AssetBTC, BaseAmount, assetAmount, assetToBase, baseAmount } from '@thorwallet/xchain-util'
-import * as Bitcoin from 'bitcoinjs-lib'
+import { assetAmount, AssetBTC, assetToBase, BaseAmount, baseAmount } from '@thorwallet/xchain-util'
+import * as Bitcoin from 'bitcoinjs-lib' // https://github.com/bitcoinjs/bitcoinjs-lib
 import accumulative from 'coinselect/accumulative'
-
 import * as blockStream from './blockstream-api'
 import { BTC_DECIMAL, MIN_TX_FEE } from './const'
 import * as haskoinApi from './haskoin-api'

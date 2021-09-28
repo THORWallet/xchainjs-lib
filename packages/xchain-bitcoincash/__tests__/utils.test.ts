@@ -1,8 +1,5 @@
-import * as utils from '../src/utils'
-import * as bchaddr from 'bchaddrjs'
 import { Network } from '@thorwallet/xchain-client'
 import * as bchaddr from 'bchaddrjs'
-
 import * as utils from '../src/utils'
 
 describe('Bitcoin Cash Utils Test', () => {

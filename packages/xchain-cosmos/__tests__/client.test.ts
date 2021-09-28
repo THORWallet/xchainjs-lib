@@ -7,7 +7,6 @@ import { TxHistoryResponse, TxResponse } from '../src/cosmos/types'
 import { AssetMuon } from '../src/types'
 import { getDenom } from '../src/util'
 
-
 const getClientUrl = (client: Client): string => {
   return client.getNetwork() === 'testnet' ? 'http://lcd.gaia.bigdipper.live:1317' : 'https://api.cosmos.network'
 }

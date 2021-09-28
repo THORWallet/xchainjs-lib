@@ -1,37 +1,25 @@
 import { ApiPromise, Keyring, WsProvider } from '@polkadot/api'
 import { KeyringPair } from '@polkadot/keyring/types'
 import { hexToU8a, isHex } from '@polkadot/util'
-import * as xchainCrypto from '@thorwallet/xchain-crypto'
-import { Asset, assetAmount, assetToBase, assetToString, baseAmount } from '@thorwallet/xchain-util'
 import {
   Address,
   Balance,
-
-  Fees, FeeType,
-
+  Fees,
+  FeesParams,
   Network,
   RootDerivationPaths,
-
-
-
-
-
-
-
-
-  singleFee, Tx,
-
+  Tx,
   TxHistoryParams,
   TxParams,
-
   TxsPage,
   XChainClient,
-  XChainClientParams
-} from '@xchainjs/xchain-client'
+  XChainClientParams,
+} from '@thorwallet/xchain-client'
+import * as xchainCrypto from '@thorwallet/xchain-crypto'
+import { Asset, assetAmount, assetToBase, assetToString } from '@thorwallet/xchain-util'
 import axios from 'axios'
 import { Account, AssetDOT, Extrinsic, SubscanResponse, TransfersResult } from './types'
 import { getDecimal, isSuccess } from './util'
-
 
 /**
  * Interface for custom Polkadot client
@@ -67,6 +55,15 @@ class Client implements PolkadotClient, XChainClient {
     this.network = network
     this.rootDerivationPaths = rootDerivationPaths
     this.addrCache = {}
+  }
+  getFees(_params?: FeesParams): Promise<Fees> {
+    throw new Error('Method not implemented.')
+  }
+  transfer(_params: TxParams): Promise<string> {
+    throw new Error('Method not implemented.')
+  }
+  estimateFees(_params: TxParams): Promise<Fees> {
+    throw new Error('Method not implemented.')
   }
   /**
    * Get getFullDerivationPath
@@ -374,82 +371,49 @@ class Client implements PolkadotClient, XChainClient {
    * @returns {Tx} The transaction details of the given transaction id.
    */
   getTransactionData = async (txId: string): Promise<Tx> => {
-    try {
-      const response: SubscanResponse<Extrinsic> = await axios
-        .post(`${this.getClientUrl()}/api/scan/extrinsic`, {
-          hash: txId,
-        })
-        .then((res) => res.data)
+    const response: SubscanResponse<Extrinsic> = await axios
+      .post(`${this.getClientUrl()}/api/scan/extrinsic`, {
+        hash: txId,
+      })
+      .then((res) => res.data)
 
-      if (!isSuccess(response) || !response.data) {
-        throw new Error('Failed to get transactions')
-      }
+    if (!isSuccess(response) || !response.data) {
+      throw new Error('Failed to get transactions')
+    }
 
     const transferResult: TransfersResult = response.data
 
     return {
       total: transferResult.count,
-      txs: (transferResult.transfers || []).map((transfer) => ({
-        asset: AssetDOT,
-        from: [
-          {
-            from: transfer.from,
-            amount: assetToBase(assetAmount(transfer.amount, getDecimal(this.network))),
-          },
-        ],
-        to: [
-          {
-            to: transfer.to,
-            amount: assetToBase(assetAmount(transfer.amount, getDecimal(this.network))),
-          },
-        ],
-        date: new Date(extrinsic.block_timestamp * 1000),
-        type: 'transfer',
-        hash: extrinsic.extrinsic_hash,
-        binanceFee: null,
-        confirmations: null,
-        ethCumulativeGasUsed: null,
-        ethGas: null,
-        ethGasPrice: null,
-        ethGasUsed: null,
-        ethTokenName: null,
-        ethTokenSymbol: null,
-      }
-    }  }
-
-  }
-
-  /**
-   * Get the current fee with transfer options.
-   *
-   * @see https://polkadot.js.org/docs/api/cookbook/tx/#how-do-i-estimate-the-transaction-fees
-   *
-   * @param {TxParams} params The transfer options.
-   * @returns {Fees} The estimated fees with the transfer options.
-   */
-  async estimateFees(params: TxParams): Promise<Fees> {
-    const walletIndex = params.walletIndex ? params.walletIndex : 0
-    const api = await this.getAPI()
-    const info = await api.tx.balances
-      .transfer(params.recipient, params.amount.amount().toNumber())
-      .paymentInfo(this.getKeyringPair(walletIndex))
-
-    const fee = baseAmount(info.partialFee.toString(), getDecimal(this.network))
-    await api.disconnect()
-
-    return singleFee(FeeType.PerByte, fee)
-  }
-
-  /**
-   * Get the current fee.
-   *
-   * @returns {Fees} The current fee.
-   */
-  async getFees(): Promise<Fees> {
-    return await this.estimateFees({
-      recipient: await this.getAddress(),
-      amount: baseAmount(0, getDecimal(this.network)),
-    })
+      txs: (transferResult.transfers || []).map((transfer) => {
+        return {
+          asset: AssetDOT,
+          from: [
+            {
+              from: transfer.from,
+              amount: assetToBase(assetAmount(transfer.amount, getDecimal(this.network))),
+            },
+          ],
+          to: [
+            {
+              to: transfer.to,
+              amount: assetToBase(assetAmount(transfer.amount, getDecimal(this.network))),
+            },
+          ],
+          date: new Date(extrinsic.block_timestamp * 1000),
+          type: 'transfer',
+          hash: extrinsic.extrinsic_hash,
+          binanceFee: null,
+          confirmations: null,
+          ethCumulativeGasUsed: null,
+          ethGas: null,
+          ethGasPrice: null,
+          ethGasUsed: null,
+          ethTokenName: null,
+          ethTokenSymbol: null,
+        }
+      }),
+    }
   }
 }
 

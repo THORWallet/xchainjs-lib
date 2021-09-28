@@ -15,12 +15,8 @@ import {
   SearchTxParams,
   TransferParams,
   TxHistoryResponse,
-  TxResponse
+  TxResponse,
 } from './types'
-
-
-
-
 
 export class CosmosSDKClient {
   sdk: CosmosSDK

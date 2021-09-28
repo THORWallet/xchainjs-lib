@@ -3,11 +3,11 @@ import * as crypto from '@binance-chain/javascript-sdk/lib/crypto'
 import { SignedSend } from '@binance-chain/javascript-sdk/lib/types'
 import {
   Address,
-  Balance,
   BaseXChainClient,
-  FeeType,
   Fees,
+  FeeType,
   Network,
+  singleFee,
   Tx,
   TxHash,
   TxHistoryParams,
@@ -15,36 +15,23 @@ import {
   TxsPage,
   XChainClient,
   XChainClientParams,
-  singleFee,
 } from '@thorwallet/xchain-client'
+import { bip32, getSeed, validatePhrase } from '@thorwallet/xchain-crypto'
 import {
   Asset,
-  AssetBNB,
-  BaseAmount,
-  Chain,
   assetAmount,
+  AssetBNB,
   assetFromString,
   assetToBase,
   assetToString,
+  BaseAmount,
   baseAmount,
   baseToAsset,
   BNBChain,
-  assetToString,
 } from '@thorwallet/xchain-util'
-import { getSeed, validatePhrase, bip32 } from '@thorwallet/xchain-crypto'
-import { isTransferFee, parseTx, getPrefix, BNB_DECIMAL } from './util'
-import { SignedSend } from '@binance-chain/javascript-sdk/lib/types'
 import axios from 'axios'
-
-import {
-  Account,
-  Balance as BinanceBalance,
-  Fees as BinanceFees,
-  TransactionResult,
-  TransferFee,
-  TxPage as BinanceTxPage,
-} from './types/binance'
-import { getPrefix, isAccount, isTransferFee, parseTx } from './util'
+import { Account, Fees as BinanceFees, TransactionResult, TransferFee, TxPage as BinanceTxPage } from './types/binance'
+import { BNB_DECIMAL, getPrefix, isAccount, isTransferFee, parseTx } from './util'
 
 type PrivKey = string
 
@@ -102,6 +89,12 @@ class Client extends BaseXChainClient implements BinanceClient, XChainClient {
     this.bncClient = new BncClient(this.getClientUrl())
     this.bncClient.chooseNetwork(network)
     this.addrCache = {}
+  }
+  getNetwork(): Network {
+    throw new Error('Method not implemented.')
+  }
+  transfer(_params: TxParams): Promise<string> {
+    throw new Error('Method not implemented.')
   }
 
   /**
@@ -407,31 +400,29 @@ class Client extends BaseXChainClient implements BinanceClient, XChainClient {
    * @returns {TxHash} The transaction hash.
    */
   multiSend = async ({ walletIndex = 0, transactions, memo = '' }: MultiSendParams): Promise<TxHash> => {
-    try {
-      const derivedAddress = await this.getAddress(walletIndex)
+    const derivedAddress = await this.getAddress(walletIndex)
 
-      await this.bncClient.initChain()
-      await this.bncClient.setPrivateKey(await this.getPrivateKey(walletIndex)).catch((error) => Promise.reject(error))
+    await this.bncClient.initChain()
+    await this.bncClient.setPrivateKey(await this.getPrivateKey(walletIndex)).catch((error) => Promise.reject(error))
 
-      const transferResult = await this.bncClient.multiSend(
-        derivedAddress,
-        transactions.map((transaction) => {
-          return {
-            to: transaction.to,
-            coins: transaction.coins.map((coin) => {
-              return {
-                denom: coin.asset.symbol,
-                amount: baseToAsset(coin.amount).amount().toString(),
-              }
-            }),
-          }
-        }),
-        memo,
-      )
+    const transferResult = await this.bncClient.multiSend(
+      derivedAddress,
+      transactions.map((transaction) => {
+        return {
+          to: transaction.to,
+          coins: transaction.coins.map((coin) => {
+            return {
+              denom: coin.asset.symbol,
+              amount: baseToAsset(coin.amount).amount().toString(),
+            }
+          }),
+        }
+      }),
+      memo,
+    )
 
     return transferResult.result.map((txResult: { hash?: TxHash }) => txResult?.hash ?? '')[0]
   }
-
 
   /**
    * Get the current transfer fee.

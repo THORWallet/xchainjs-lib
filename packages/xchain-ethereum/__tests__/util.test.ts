@@ -4,26 +4,23 @@ import { ethers } from 'ethers'
 import nock from 'nock'
 import { EthNetwork } from '../src/types'
 import {
-  ethNetworkToXchains, ETH_DECIMAL,
-
+  ethNetworkToXchains,
+  ETH_DECIMAL,
   filterSelfTxs,
   getDecimal,
   getDefaultFees,
   getPrefix,
   getTokenAddress,
   getTokenBalances,
-
   getTxFromEthplorerEthTransaction,
-  getTxFromEthplorerTokenOperation, getTxFromEthTransaction,
-
-
+  getTxFromEthplorerTokenOperation,
+  getTxFromEthTransaction,
   getTxFromTokenTransaction,
   validateAddress,
   validateSymbol,
-  xchainNetworkToEths
+  xchainNetworkToEths,
 } from '../src/utils'
 import { mock_etherscan_api } from '../__mocks__/etherscan-api'
-
 
 describe('ethereum/util', () => {
   describe('xchainNetworkToEths', () => {

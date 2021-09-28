@@ -5,7 +5,6 @@ import Client from '../src/client'
 import { mock_ethplorer_api_getTxInfo } from '../__mocks__/ethplorer-api'
 import { mock_thornode_inbound_addresses_success } from '../__mocks__/thornode-api'
 
-
 const phrase = 'canyon throw labor waste awful century ugly they found post source draft'
 // https://iancoleman.io/bip39/
 // m/44'/60'/0'/0/0

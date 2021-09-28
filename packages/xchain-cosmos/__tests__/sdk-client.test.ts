@@ -5,7 +5,6 @@ import { TxHistoryResponse, TxResponse } from '@thorwallet/xchain-cosmos'
 import nock from 'nock'
 import { CosmosSDKClient } from '../src/cosmos/sdk-client'
 
-
 const mockAccountsAddress = (
   url: string,
   address: string,

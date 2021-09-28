@@ -6,7 +6,6 @@ import { Client } from '../src/client'
 import { assertAccountsBalance, assertTxData, assertTxHistory } from '../__mocks__/subscan'
 import { mockWs, Scope } from '../__mocks__/ws'
 
-
 declare const global: Global
 
 describe('Client Test', () => {

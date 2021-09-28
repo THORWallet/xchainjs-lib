@@ -3,26 +3,9 @@ import { EtherscanProvider, getDefaultProvider } from '@ethersproject/providers'
 import {
   Address,
   Balance,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  Balances, BaseXChainClient,
+  Balances,
+  BaseXChainClient,
   FeeOption,
-
   Fees,
   Network,
   Tx,
@@ -31,11 +14,10 @@ import {
   TxParams,
   TxsPage,
   XChainClient,
-  XChainClientParams
+  XChainClientParams,
 } from '@thorwallet/xchain-client'
 import * as Crypto from '@thorwallet/xchain-crypto'
 import { Asset, AssetETH, assetToString, baseAmount, BaseAmount } from '@thorwallet/xchain-util'
-import { Chain } from '@xchainjs/xchain-util'
 import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { parseUnits, toUtf8Bytes } from 'ethers/lib/utils'
 import pThrottle from 'p-throttle'
@@ -44,50 +26,35 @@ import * as etherscanAPI from './etherscan-api'
 import * as ethplorerAPI from './ethplorer-api'
 import { HDNode } from './hdnode/hdnode'
 import {
-  ApproveParams, CallParams,
+  ApproveParams,
+  CallParams,
   EstimateApproveParams,
-  EstimateCallParams, ExplorerUrl,
-
-
-
-  FeesWithGasPricesAndLimits, GasOracleResponse,
-
-
-
+  EstimateCallParams,
+  ExplorerUrl,
+  FeesWithGasPricesAndLimits,
+  GasOracleResponse,
   GasPrices,
-
-
-  InfuraCreds, IsApprovedParams, Network as EthNetwork,
-
-  TxOverrides
+  InfuraCreds,
+  IsApprovedParams,
+  Network as EthNetwork,
+  TxOverrides,
 } from './types'
 import {
   BASE_TOKEN_GAS_COST,
   ETHAddress,
   ETH_DECIMAL,
-
-
   getDefaultGasPrices,
   getFee,
   getTokenAddress,
   getTokenBalances,
   getTxFromEthplorerEthTransaction,
-  getTxFromEthplorerTokenOperation, MAX_APPROVAL,
+  getTxFromEthplorerTokenOperation,
+  MAX_APPROVAL,
   SIMPLE_GAS_COST,
-
-
-
-
-
-
   validateAddress,
-  xchainNetworkToEths
+  xchainNetworkToEths,
 } from './utils'
 import { Wallet } from './wallet/wallet'
-
-  standardFeeRates,
-} from '@xchainjs/xchain-client'
-
 
 /**
  * Interface for custom Ethereum client
@@ -166,7 +133,7 @@ export default class Client extends BaseXChainClient implements XChainClient, Et
    * @returns {void}
    */
   purgeClient = async (): Promise<void> => {
-super.purgeClient()
+    super.purgeClient()
 
     this.hdNode = await HDNode.fromMnemonic('')
   }
@@ -354,79 +321,77 @@ super.purgeClient()
    * @throws {"Invalid asset"} throws when the give asset is an invalid one
    */
   getBalance = async (address: Address, assets?: Asset[]): Promise<Balances> => {
-    try {
-      const ethAddress = address || (await this.getAddress())
-      // get ETH balance directly from provider
-      const ethBalance: BigNumber = await this.getProvider().getBalance(ethAddress)
-      const ethBalanceAmount = baseAmount(ethBalance.toString(), ETH_DECIMAL)
+    const ethAddress = address || (await this.getAddress())
+    // get ETH balance directly from provider
+    const ethBalance: BigNumber = await this.getProvider().getBalance(ethAddress)
+    const ethBalanceAmount = baseAmount(ethBalance.toString(), ETH_DECIMAL)
 
-      if (this.getNetwork() === 'mainnet') {
-        // use ethplorerAPI for mainnet - ignore assets
-        const account = await ethplorerAPI.getAddress(this.ethplorerUrl, address, this.ethplorerApiKey)
-        const balances: Balance[] = [
-          {
+    if (this.getNetwork() === 'mainnet') {
+      // use ethplorerAPI for mainnet - ignore assets
+      const account = await ethplorerAPI.getAddress(this.ethplorerUrl, address, this.ethplorerApiKey)
+      const balances: Balance[] = [
+        {
+          asset: AssetETH,
+          amount: ethBalanceAmount,
+        },
+      ]
+
+      if (account.tokens) {
+        balances.push(...getTokenBalances(account.tokens))
+      }
+
+      return balances
+    }
+    if (this.getNetwork() === 'testnet') {
+      // use etherscan for testnet
+
+      const newAssets = assets || [AssetETH]
+      // Follow approach is only for testnet
+      // For mainnet, we will use ethplorer api(one request only)
+      // https://github.com/xchainjs/xchainjs-lib/issues/252
+      // And to avoid etherscan api call limit, it gets balances in a sequence way, not in parallel
+
+      const throttle = pThrottle({
+        limit: 5,
+        interval: 1000,
+      })
+
+      const getBalance = throttle(
+        async (asset: Asset): Promise<Balance> => {
+          const etherscan = this.getEtherscanProvider()
+          if (assetToString(asset) !== assetToString(AssetETH)) {
+            // Handle token balances
+            const assetAddress = getTokenAddress(asset)
+            if (!assetAddress) {
+              throw new Error(`Invalid asset ${asset}`)
+            }
+            const balance = await etherscanAPI.getTokenBalance({
+              baseUrl: etherscan.baseUrl,
+              address,
+              assetAddress,
+              apiKey: etherscan.apiKey,
+            })
+            const decimals =
+              BigNumber.from(await this.call<BigNumberish>(0, assetAddress, erc20ABI, 'decimals', [])).toNumber() ||
+              ETH_DECIMAL
+
+            if (!Number.isNaN(decimals)) {
+              return {
+                asset,
+                amount: baseAmount(balance.toString(), decimals),
+              }
+            }
+          }
+          return {
             asset: AssetETH,
             amount: ethBalanceAmount,
-          },
-        ]
+          }
+        },
+      )
 
-        if (account.tokens) {
-          balances.push(...getTokenBalances(account.tokens))
-        }
+      const balances = await Promise.all(newAssets.map((asset) => getBalance(asset)))
 
-        return balances
-      }
-      case Network.Testnet: {
-        // use etherscan for testnet
-
-        const newAssets = assets || [AssetETH]
-        // Follow approach is only for testnet
-        // For mainnet, we will use ethplorer api(one request only)
-        // https://github.com/xchainjs/xchainjs-lib/issues/252
-        // And to avoid etherscan api call limit, it gets balances in a sequence way, not in parallel
-
-        const throttle = pThrottle({
-          limit: 5,
-          interval: 1000,
-        })
-
-        const getBalance = throttle(
-          async (asset: Asset): Promise<Balance> => {
-            const etherscan = this.getEtherscanProvider()
-            if (assetToString(asset) !== assetToString(AssetETH)) {
-              // Handle token balances
-              const assetAddress = getTokenAddress(asset)
-              if (!assetAddress) {
-                throw new Error(`Invalid asset ${asset}`)
-              }
-              const balance = await etherscanAPI.getTokenBalance({
-                baseUrl: etherscan.baseUrl,
-                address,
-                assetAddress,
-                apiKey: etherscan.apiKey,
-              })
-              const decimals =
-                BigNumber.from(await this.call<BigNumberish>(0, assetAddress, erc20ABI, 'decimals', [])).toNumber() ||
-                ETH_DECIMAL
-
-              if (!Number.isNaN(decimals)) {
-                return {
-                  asset,
-                  amount: baseAmount(balance.toString(), decimals),
-                }
-              }
-            }
-            return {
-              asset: AssetETH,
-              amount: ethBalanceAmount,
-            }
-          },
-        )
-
-        const balances = await Promise.all(newAssets.map((asset) => getBalance(asset)))
-
-        return balances
-      }
+      return balances
     }
   }
 
@@ -756,8 +721,8 @@ super.purgeClient()
         },
       )
 
-        txResult = await (await this.getWallet()).sendTransaction(transactionRequest)
-      }
+      txResult = await (await this.getWallet()).sendTransaction(transactionRequest)
+    }
 
     return txResult.hash
   }

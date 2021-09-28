@@ -7,10 +7,9 @@ import {
   GasOracleResponse,
   TokenBalanceParam,
   TokenTransactionInfo,
-  TransactionHistoryParam
+  TransactionHistoryParam,
 } from './types'
 import { filterSelfTxs, getTxFromEthTransaction, getTxFromTokenTransaction } from './utils'
-
 
 const getApiKeyQueryParameter = (apiKey?: string): string => (!!apiKey ? `&apiKey=${apiKey}` : '')
 

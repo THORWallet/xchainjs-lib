@@ -1,7 +1,6 @@
 import { getDefaultFees } from '../src/util'
 import { baseAmount } from '@thorwallet/xchain-util'
 
-
 describe('Utils Test', () => {
   it('get default fees', async () => {
     const fees = await getDefaultFees('testnet' as Network)

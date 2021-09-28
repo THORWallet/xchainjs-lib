@@ -2524,6 +2524,28 @@
     "@typescript-eslint/types" "4.18.0"
     eslint-visitor-keys "^2.0.0"
 
+"@xchainjs/xchain-client@^0.10.3":
+  version "0.10.3"
+  resolved "https://registry.yarnpkg.com/@xchainjs/xchain-client/-/xchain-client-0.10.3.tgz#178fa21d0e59ba660b3bcd85c0b859e309f60d2a"
+  integrity sha512-+RhRwOmlBZYnSsZJ4XchJM0bxTROUqKBo7/N4N3KWmmWG3MQ8kx8qENCEU8wSlqXoJt9fNOztQBlq/ypRijO6w==
+
+"@xchainjs/xchain-crypto@^0.2.6":
+  version "0.2.6"
+  resolved "https://registry.yarnpkg.com/@xchainjs/xchain-crypto/-/xchain-crypto-0.2.6.tgz#2d0a6f81aefd8741b4e428431651d9c312f4b410"
+  integrity sha512-DVw+JDNQ0uNgc8JbWYh8BEJuABxzvfwXvp0mX8ywEeN0xwZ87JavyKQs+I2aWNhcE0shww1bQd9u8w6BdtUM4g==
+  dependencies:
+    bech32 "^2.0.0"
+    bip39 "^3.0.4"
+    crypto-js "^4.1.1"
+    foundry-primitives "^0.2.1"
+    hdkey "^2.0.1"
+    uuid "^8.3.2"
+
+"@xchainjs/xchain-util@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@xchainjs/xchain-util/-/xchain-util-0.3.1.tgz#90fb81379d6c8eca83c7500684108b3dc4a1479f"
+  integrity sha512-mUHFtiC62eYBWgPW/0oU/UQHIE5cKsSB6CRECnzkvvSoekpCJgZ8dfLLRCLgLX/uMRVqYX/YQoJiwh23x4gFMQ==
+
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
   resolved "https://registry.npmjs.org/@yarnpkg/lockfile/-/lockfile-1.1.0.tgz"
@@ -9172,6 +9194,11 @@ sprintf-js@~1.0.2:
   version "1.0.3"
   resolved "https://registry.npmjs.org/sprintf-js/-/sprintf-js-1.0.3.tgz"
   integrity sha1-BOaSb2YolTVPPdAVIDYzuFcpfiw=
+
+sr25519@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/sr25519/-/sr25519-0.2.0.tgz#80e1632c1e7c07eae00cf5303dc804d87e76fb15"
+  integrity sha512-dRyJ09XOOl6tBRwQ3ZwkukyvhY3mHLC5k45aBBp+xjKEpjPPU4oL2JCQqisNhL96/gzwsI1PMxZ52svfQurNLw==
 
 sshpk@^1.7.0:
   version "1.16.1"

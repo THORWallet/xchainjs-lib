@@ -2,17 +2,15 @@ import {
   Address,
   Balance,
   Fee,
-
   FeeRate,
   Network,
   Tx,
   TxHash,
   TxHistoryParams,
   TxParams,
-
   TxsPage,
   UTXOClient,
-  XChainClientParams
+  XChainClientParams,
 } from '@thorwallet/xchain-client'
 import { bip32, getSeed, validatePhrase } from '@thorwallet/xchain-crypto'
 import { assetAmount, AssetLTC, assetToBase, Chain } from '@thorwallet/xchain-util'
@@ -21,7 +19,6 @@ import * as sochain from './sochain-api'
 import { NodeAuth } from './types'
 import { TxIO } from './types/sochain-api-types'
 import * as Utils from './utils'
-
 
 export type LitecoinClientParams = XChainClientParams & {
   sochainUrl?: string
@@ -341,36 +338,34 @@ class Client extends UTXOClient {
    * @returns {Tx} The transaction details of the given transaction id.
    */
   getTransactionData = async (txId: string): Promise<Tx> => {
-    try {
-      const rawTx = await sochain.getTx({
-        sochainUrl: this.sochainUrl,
-        network: this.network,
-        hash: txItem.txid,
-      })
-      const tx: Tx = {
-        asset: AssetLTC,
-        from: rawTx.inputs.map((i: TxIO) => ({
-          from: i.address,
-          amount: assetToBase(assetAmount(i.value, Utils.LTC_DECIMAL)),
-        })),
-        to: rawTx.outputs
-          // ignore tx with type 'nulldata'
-          .filter((i: TxIO) => i.type !== 'nulldata')
-          .map((i: TxIO) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, Utils.LTC_DECIMAL)) })),
-        date: new Date(rawTx.time * 1000),
-        type: TxType.Transfer,
-        hash: rawTx.txid,
-        confirmations: rawTx.confirmations,
-        binanceFee: null,
-        ethCumulativeGasUsed: null,
-        ethGas: null,
-        ethGasPrice: null,
-        ethGasUsed: null,
-        ethTokenName: null,
-        ethTokenSymbol: null,
-      }
-      transactions.push(tx)
+    const rawTx = await sochain.getTx({
+      sochainUrl: this.sochainUrl,
+      network: this.network,
+      hash: txId,
+    })
+    const tx: Tx = {
+      asset: AssetLTC,
+      from: rawTx.inputs.map((i: TxIO) => ({
+        from: i.address,
+        amount: assetToBase(assetAmount(i.value, Utils.LTC_DECIMAL)),
+      })),
+      to: rawTx.outputs
+        // ignore tx with type 'nulldata'
+        .filter((i: TxIO) => i.type !== 'nulldata')
+        .map((i: TxIO) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, Utils.LTC_DECIMAL)) })),
+      date: new Date(rawTx.time * 1000),
+      type: TxType.Transfer,
+      hash: rawTx.txid,
+      confirmations: rawTx.confirmations,
+      binanceFee: null,
+      ethCumulativeGasUsed: null,
+      ethGas: null,
+      ethGasPrice: null,
+      ethGasUsed: null,
+      ethTokenName: null,
+      ethTokenSymbol: null,
     }
+    transactions.push(tx)
 
     const result: TxsPage = {
       total,
@@ -379,12 +374,6 @@ class Client extends UTXOClient {
     return result
   }
 
-  /**
-   * Get the transaction details of a given transaction id.
-   *
-   * @param {string} txId The transaction id.
-   * @returns {Tx} The transaction details of the given transaction id.
-   */
   async getTransactionData(txId: string): Promise<Tx> {
     const rawTx = await sochain.getTx({
       sochainUrl: this.sochainUrl,

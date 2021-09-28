@@ -10,13 +10,12 @@ import { mock_all_api } from '../__mocks__'
 import {
   mock_etherscan_eth_txs_api,
   mock_etherscan_token_txs_api,
-  mock_gastracker_api
+  mock_gastracker_api,
 } from '../__mocks__/etherscan-api'
 import {
   mock_thornode_inbound_addresses_fail,
-  mock_thornode_inbound_addresses_success
+  mock_thornode_inbound_addresses_success,
 } from '../__mocks__/thornode-api'
-
 
 const phrase = 'canyon throw labor waste awful century ugly they found post source draft'
 const newPhrase = 'logic neutral rug brain pluck submit earth exit erode august remain ready'

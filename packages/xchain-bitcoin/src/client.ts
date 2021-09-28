@@ -2,26 +2,19 @@ import {
   Address,
   Balance,
   Fee,
-  FeeOption,
   FeeRate,
   Network,
   Tx,
   TxHash,
   TxHistoryParams,
   TxParams,
-  TxType,
   TxsPage,
   UTXOClient,
   XChainClientParams,
 } from '@thorwallet/xchain-client'
-import { validatePhrase, getSeed, bip32 } from '@thorwallet/xchain-crypto'
-import { AssetBTC, assetAmount, assetToBase } from '@thorwallet/xchain-util'
-import { FeesWithRates, FeeRate, FeeRates } from './types/client-types'
-} from '@thorwallet/xchain-client'
-import { getSeed } from '@thorwallet/xchain-crypto'
-import { AssetBTC, Chain, assetAmount, assetToBase } from '@thorwallet/xchain-util'
+import { bip32, getSeed, validatePhrase } from '@thorwallet/xchain-crypto'
+import { assetAmount, AssetBTC, assetToBase } from '@thorwallet/xchain-util'
 import * as Bitcoin from 'bitcoinjs-lib'
-
 import { BTC_DECIMAL } from './const'
 import * as sochain from './sochain-api'
 import * as Utils from './utils'
@@ -325,10 +318,8 @@ class Client extends UTXOClient {
     }
   }
 
-
-
-async getTransactionData(txId: string): Promise<Tx> {
-  const rawTx = await sochain.getTx({
+  async getTransactionData(txId: string): Promise<Tx> {
+    const rawTx = await sochain.getTx({
       sochainUrl: this.sochainUrl,
       network: this.network,
       hash: txId,

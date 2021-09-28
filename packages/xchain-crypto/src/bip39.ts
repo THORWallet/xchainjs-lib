@@ -1,5 +1,8 @@
-const unorm = require('unorm')
 import RNSimple from 'react-native-simple-crypto'
+import { generateSecureRandom } from 'react-native-securerandom'
+import { WORDLIST } from './wordlist'
+
+const unorm = require('unorm')
 
 function salt(password: string) {
   return 'mnemonic' + (unorm.nfkd(password) || '') // Us unorm until String.prototype.normalize gets better browser support
@@ -27,9 +30,6 @@ async function checksumBits(entropyBuffer: Buffer) {
 
   return bytesToBinary(hash.slice(0)).slice(0, CS)
 }
-
-import { generateSecureRandom } from 'react-native-securerandom'
-import { WORDLIST } from './wordlist'
 
 declare type RandomNumberGenerator = (size: number, callback: (err: Error | null, buf: Buffer) => void) => void
 

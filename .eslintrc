@@ -21,18 +21,6 @@
     "@typescript-eslint/no-var-requires": "off",
     "no-duplicate-imports": "error",
     "no-undef": "off",
-    "ordered-imports/ordered-imports": [
-      "error",
-      {
-        "symbols-first": false,
-        "declaration-ordering": ["source", "lowercase-last"],
-        "specifier-ordering": "lowercase-last",
-        "group-ordering": [
-          { "name": "parent directories", "match": "^\\.\\.", "order": 30 },
-          { "name": "current directory", "match": "^\\.", "order": 40 },
-          { "name": "third-party", "match": ".*", "order": 10 }
-        ]
-      }
-    ]
+    "ordered-imports/ordered-imports": "off"
   }
 }

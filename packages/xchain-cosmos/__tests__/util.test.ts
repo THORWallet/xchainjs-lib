@@ -7,7 +7,6 @@ import { APIQueryParam, RawTxResponse, TxResponse } from '../src/cosmos/types'
 import { AssetAtom, AssetMuon } from '../src/types'
 import { getAsset, getDenom, getQueryString, getTxsFromHistory, isMsgMultiSend, isMsgSend } from '../src/util'
 
-
 describe('cosmos/util', () => {
   describe('Msg type guards', () => {
     const msgMultiSend: MsgMultiSend = {
