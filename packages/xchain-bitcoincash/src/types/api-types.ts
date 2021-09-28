@@ -1,4 +1,4 @@
-import { Network, TxHash } from '@thorwallet/xchain-client/lib'
+import { Network, TxHash } from '@thorwallet/xchain-client'
 
 export type AddressParams = {
   haskoinUrl: string

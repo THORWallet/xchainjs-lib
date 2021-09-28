@@ -1,10 +1,10 @@
-import crypto from 'crypto'
-import { pbkdf2Async } from './utils'
-
 import * as bip39 from 'bip39'
+import crypto from 'crypto'
 import { blake256 } from 'foundry-primitives'
 import { v4 as uuidv4 } from 'uuid'
 import { generateMnemonic, mnemonicToSeed, validateMnemonic } from './bip39'
+
+import { pbkdf2Async } from './utils'
 
 // Constants
 const cipher = 'aes-128-ctr'
@@ -164,30 +164,24 @@ export const encryptToKeyStore = async (phrase: string, password: string): Promi
  */
 export const decryptFromKeystore = async (keystore: Keystore, password: string): Promise<string> => {
   const kdfparams = keystore.crypto.kdfparams
-  try {
-    const derivedKey = await pbkdf2Async(
-      Buffer.from(password),
-      Buffer.from(kdfparams.salt, 'hex'),
-      kdfparams.c,
-      kdfparams.dklen,
-      hashFunction,
-    )
+  const derivedKey = await pbkdf2Async(
+    Buffer.from(password),
+    Buffer.from(kdfparams.salt, 'hex'),
+    kdfparams.c,
+    kdfparams.dklen,
+    hashFunction,
+  )
 
-    const ciphertext = Buffer.from(keystore.crypto.ciphertext, 'hex')
-    const mac = blake256(Buffer.concat([derivedKey.slice(16, 32), ciphertext]))
+  const ciphertext = Buffer.from(keystore.crypto.ciphertext, 'hex')
+  const mac = blake256(Buffer.concat([derivedKey.slice(16, 32), ciphertext]))
 
-    if (mac !== keystore.crypto.mac) {
-      return Promise.reject('Invalid password')
-    }
-    const decipher = crypto.createDecipheriv(
-      keystore.crypto.cipher,
-      derivedKey.slice(0, 16),
-      Buffer.from(keystore.crypto.cipherparams.iv, 'hex'),
-    )
+  if (mac !== keystore.crypto.mac) throw new Error('Invalid password')
+  const decipher = crypto.createDecipheriv(
+    keystore.crypto.cipher,
+    derivedKey.slice(0, 16),
+    Buffer.from(keystore.crypto.cipherparams.iv, 'hex'),
+  )
 
-    const phrase = Buffer.concat([decipher.update(ciphertext), decipher.final()])
-    return Promise.resolve(phrase.toString('utf8'))
-  } catch (error) {
-    return Promise.reject(error)
-  }
+  const phrase = Buffer.concat([decipher.update(ciphertext), decipher.final()])
+  return phrase.toString('utf8')
 }

@@ -1,16 +1,13 @@
+import { codec, Msg, PrivKey } from '@thorwallet/cosmos-client'
+import { StdTxFee } from '@thorwallet/cosmos-client/api'
+import { BaseAccount, StdTx } from '@thorwallet/cosmos-client/x/auth'
 import { BigSource } from 'big.js'
 
-import { PrivKey, Msg, codec } from '@thorwallet/cosmos-client'
-import { BaseAccount, StdTx } from '@thorwallet/cosmos-client/x/auth'
-import { StdTxFee } from '@thorwallet/cosmos-client/api'
-import { RootDerivationPaths, Network } from '@thorwallet/xchain-client'
 
 export type CosmosSDKClientParams = {
   server: string
   chainId: string
   prefix?: string
-  network?: Network
-  rootDerivationPaths?: RootDerivationPaths
 }
 
 export type SearchTxParams = {
@@ -79,7 +76,7 @@ export type TxHistoryResponse = {
   page_number?: number
   page_total?: number
   limit?: number
-  txs?: Array<TxResponse>
+  txs?: TxResponse[]
 }
 
 export type APIQueryParam = {

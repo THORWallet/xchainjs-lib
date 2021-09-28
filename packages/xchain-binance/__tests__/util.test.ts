@@ -1,10 +1,15 @@
+import { FeeType } from '@xchainjs/xchain-client'
+import { baseAmount } from '@xchainjs/xchain-util'
+
+import { DexFees, Fee, TransferFee, Tx as BinanceTx } from '../src/types/binance'
+import { Transfer, TransferEvent } from '../src/types/binance-ws'
 import {
   getDefaultFees,
   getHashFromTransfer,
   getTxHashFromMemo,
+  isDexFees,
   isFee,
   isTransferFee,
-  isDexFees,
   parseTx,
 } from '../src/util'
 import { TransferEvent, Transfer } from '../src/types/binance-ws'
@@ -150,7 +155,7 @@ describe('binance/util', () => {
     describe('fetches default fees', () => {
       it('fetches default fees', async () => {
         const singleTxFee = baseAmount(37500)
-        const transferFee = { type: 'base', average: singleTxFee, fast: singleTxFee, fastest: singleTxFee }
+        const transferFee = { type: 'base' as FeeType, average: singleTxFee, fast: singleTxFee, fastest: singleTxFee }
         const fees = await getDefaultFees()
         expect(fees.type).toEqual(transferFee.type)
         expect(fees.average.amount().isEqualTo(singleTxFee.amount())).toBeTruthy()

@@ -1,27 +1,27 @@
+import { PrivKey } from '@thorwallet/cosmos-client'
 import {
-  RootDerivationPaths,
   Address,
-  Balances,
+  Balance,
+Network,
   Fees,
   Network,
+  RootDerivationPaths,
   Tx,
-  TxParams,
   TxHash,
   TxHistoryParams,
+  TxParams,
   TxsPage,
   XChainClient,
   XChainClientParams,
-  Network as XChainNetwork,
+  FeesParams
 } from '@thorwallet/xchain-client'
-import { Asset, baseAmount, assetToString } from '@thorwallet/xchain-util'
 import * as xchainCrypto from '@thorwallet/xchain-crypto'
-
-import { PrivKey, codec } from '@thorwallet/cosmos-client'
-import { MsgSend, MsgMultiSend } from '@thorwallet/cosmos-client/x/bank'
-
+import { Asset, assetToString, baseAmount } from '@thorwallet/xchain-util'
 import { CosmosSDKClient } from './cosmos/sdk-client'
 import { AssetAtom, AssetMuon } from './types'
-import { DECIMAL, getDenom, getAsset, getTxsFromHistory } from './util'
+import { DECIMAL, getAsset, getDenom, getTxsFromHistory } from './util'
+
+
 
 /**
  * Interface for custom Cosmos client
@@ -48,7 +48,7 @@ class Client implements CosmosClient, XChainClient {
   private rootDerivationPaths: RootDerivationPaths
   private addrCache: Record<string, Record<number, string>>
 
-  private sdkClients: Map<XChainNetwork, CosmosSDKClient> = new Map<XChainNetwork, CosmosSDKClient>()
+  private sdkClients: Map<Network, CosmosSDKClient> = new Map<Network, CosmosSDKClient>()
 
   /**
    * Constructor
@@ -61,17 +61,21 @@ class Client implements CosmosClient, XChainClient {
    * @throws {"Invalid phrase"} Thrown if the given phase is invalid.
    */
   constructor({
-    network = 'testnet',
+    network = Network.Testnet,
+    phrase,
     rootDerivationPaths = {
-      mainnet: `44'/118'/0'/0/`,
-      testnet: `44'/118'/1'/0/`,
+      [Network.Mainnet]: `44'/118'/0'/0/`,
+      [Network.Testnet]: `44'/118'/1'/0/`,
     },
   }: XChainClientParams) {
     this.network = network
     this.rootDerivationPaths = rootDerivationPaths
-    this.sdkClients.set('testnet', TESTNET_SDK)
-    this.sdkClients.set('mainnet', MAINNET_SDK)
-    this.addrCache = {}
+this.sdkClients.set(Network.Testnet, TESTNET_SDK)
+this.sdkClients.set(Network.Mainnet, MAINNET_SDK)
+this.addrCache = {}
+  }
+  getFees(params?: FeesParams): Promise<Fees> {
+    throw new Error('Method not implemented.')
   }
 
   /**
@@ -86,13 +90,13 @@ class Client implements CosmosClient, XChainClient {
   /**
    * Set/update the current network.
    *
-   * @param {Network} network `mainnet` or `testnet`.
+   * @param {Network} network
    * @returns {void}
    *
    * @throws {"Network must be provided"}
    * Thrown if network has not been set before.
    */
-  setNetwork = (network: Network): void => {
+  setNetwork(network: Network): void {
     if (!network) {
       throw new Error('Network must be provided')
     } else {
@@ -103,21 +107,10 @@ class Client implements CosmosClient, XChainClient {
   /**
    * Get the current network.
    *
-   * @returns {Network} The current network. (`mainnet` or `testnet`)
+   * @returns {Network}
    */
   getNetwork(): Network {
     return this.network
-  }
-
-  /**
-   * @private
-   * Register message codecs.
-   *
-   * @returns {void}
-   */
-  private registerCodecs = (): void => {
-    codec.registerCodec('cosmos-sdk/MsgSend', MsgSend, MsgSend.fromJSON)
-    codec.registerCodec('cosmos-sdk/MsgMultiSend', MsgMultiSend, MsgMultiSend.fromJSON)
   }
 
   /**
@@ -125,8 +118,13 @@ class Client implements CosmosClient, XChainClient {
    *
    * @returns {string} The explorer url.
    */
-  getExplorerUrl = (): string => {
-    return this.network === 'testnet' ? 'https://gaia.bigdipper.live' : 'https://cosmos.bigdipper.live'
+  getExplorerUrl(): string {
+    switch (this.network) {
+      case Network.Mainnet:
+        return 'https://cosmos.bigdipper.live'
+      case Network.Testnet:
+        return 'https://gaia.bigdipper.live'
+    }
   }
 
   /**
@@ -135,7 +133,7 @@ class Client implements CosmosClient, XChainClient {
    * @param {Address} address
    * @returns {string} The explorer url for the given address.
    */
-  getExplorerAddressUrl = (address: Address): string => {
+  getExplorerAddressUrl(address: Address): string {
     return `${this.getExplorerUrl()}/account/${address}`
   }
 
@@ -145,7 +143,7 @@ class Client implements CosmosClient, XChainClient {
    * @param {string} txID
    * @returns {string} The explorer url for the given transaction id.
    */
-  getExplorerTxUrl = (txID: string): string => {
+  getExplorerTxUrl(txID: string): string {
     return `${this.getExplorerUrl()}/transactions/${txID}`
   }
 
@@ -185,7 +183,7 @@ class Client implements CosmosClient, XChainClient {
 
     return this.getSDKClient().getPrivKeyFromMnemonic(this.phrase, this.getFullDerivationPath(index))
   }
-  getSDKClient = (): CosmosSDKClient => {
+  getSDKClient(): CosmosSDKClient {
     return this.sdkClients.get(this.network) || TESTNET_SDK
   }
 
@@ -223,7 +221,7 @@ class Client implements CosmosClient, XChainClient {
    * @param {Address} address
    * @returns {boolean} `true` or `false`
    */
-  validateAddress = (address: Address): boolean => {
+  validateAddress(address: Address): boolean {
     return this.getSDKClient().checkAddress(address)
   }
 
@@ -232,8 +230,13 @@ class Client implements CosmosClient, XChainClient {
    *
    * @returns {string} The main asset based on the network.
    */
-  getMainAsset = (): Asset => {
-    return this.network === 'testnet' ? AssetMuon : AssetAtom
+  getMainAsset(): Asset {
+    switch (this.network) {
+      case Network.Mainnet:
+        return AssetAtom
+      case Network.Testnet:
+        return AssetMuon
+    }
   }
 
   /**
@@ -241,7 +244,7 @@ class Client implements CosmosClient, XChainClient {
    *
    * @param {Address} address By default, it will return the balance of the current wallet. (optional)
    * @param {Asset} asset If not set, it will return all assets available. (optional)
-   * @returns {Array<Balance>} The balance of the address.
+   * @returns {Balance[]} The balance of the address.
    */
   getBalance = async (address: Address, assets?: Asset[]): Promise<Balances> => {
     try {
@@ -280,14 +283,13 @@ class Client implements CosmosClient, XChainClient {
    * @param {TxHistoryParams} params The options to get transaction history. (optional)
    * @returns {TxsPage} The transaction history.
    */
-  getTransactions = async (params?: TxHistoryParams): Promise<TxsPage> => {
+  async getTransactions(params?: TxHistoryParams): Promise<TxsPage> {
     const messageAction = undefined
     const page = (params && params.offset) || undefined
     const limit = (params && params.limit) || undefined
     const txMinHeight = undefined
     const txMaxHeight = undefined
 
-    try {
       this.registerCodecs()
 
       const mainAsset = this.getMainAsset()
@@ -300,13 +302,11 @@ class Client implements CosmosClient, XChainClient {
         txMaxHeight,
       })
 
-      return {
-        total: parseInt(txHistory.total_count?.toString() || '0'),
-        txs: getTxsFromHistory(txHistory.txs || [], mainAsset),
-      }
-    } catch (error) {
-      return Promise.reject(error)
-    }
+
+    return {
+      total: parseInt(txHistory.total_count?.toString() || '0'),
+      txs: getTxsFromHistory(txHistory.txs || [], mainAsset),
+    } 
   }
 
   /**
@@ -315,19 +315,12 @@ class Client implements CosmosClient, XChainClient {
    * @param {string} txId The transaction id.
    * @returns {Tx} The transaction details of the given transaction id.
    */
-  getTransactionData = async (txId: string): Promise<Tx> => {
-    try {
-      const txResult = await this.getSDKClient().txsHashGet(txId)
-      const txs = getTxsFromHistory([txResult], this.getMainAsset())
+  async getTransactionData(txId: string): Promise<Tx> {
+    const txResult = await this.getSDKClient().txsHashGet(txId)
+    const txs = getTxsFromHistory([txResult], this.getMainAsset())
+    if (txs.length === 0) throw new Error('transaction not found')
 
-      if (txs.length === 0) {
-        throw new Error('transaction not found')
-      }
-
-      return txs[0]
-    } catch (error) {
-      return Promise.reject(error)
-    }
+    return txs[0]
   }
 
   /**
@@ -351,26 +344,9 @@ class Client implements CosmosClient, XChainClient {
         memo,
       })
 
-      return transferResult?.txhash || ''
-    } catch (error) {
-      return Promise.reject(error)
-    }
+    return transferResult?.txhash || ''
   }
 
-  /**
-   * Get the current fee.
-   *
-   * @returns {Fees} The current fee.
-   */
-  getFees = async (): Promise<Fees> => {
-    // there is no fixed fee, we set fee amount when creating a transaction.
-    return Promise.resolve({
-      type: 'base',
-      fast: baseAmount(750, DECIMAL),
-      fastest: baseAmount(2500, DECIMAL),
-      average: baseAmount(0, DECIMAL),
-    })
-  }
-}
+}}
 
 export { Client }

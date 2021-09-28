@@ -4,7 +4,7 @@
   "description": "Custom Cosmos client and utilities used by XChainJS clients",
   "keywords": [
     "XChain",
-    "Cosoms"
+    "Cosmos"
   ],
   "author": "XChainJS",
   "homepage": "https://github.com/xchainjs/xchainjs-lib",
@@ -36,6 +36,7 @@
     "@thorwallet/xchain-crypto": "0.0.1-alpha.869+49db531",
     "@thorwallet/xchain-util": "0.0.1-alpha.869+49db531",
     "axios": "^0.21.0",
+    "cosmos-client": "0.39.2",
     "nock": "^13.0.5"
   },
   "publishConfig": {

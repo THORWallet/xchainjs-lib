@@ -1,4 +1,4 @@
-import { Msg, AccAddress } from '@thorwallet/cosmos-client'
+import { AccAddress, Msg } from '@thorwallet/cosmos-client'
 import { StdTxFee } from '@thorwallet/cosmos-client/api'
 import { StdSignature } from '@thorwallet/cosmos-client/x/auth'
 
@@ -11,12 +11,7 @@ export class MsgNativeTx extends Msg {
   coins: MsgCoin[]
   memo: string
   signer: AccAddress
-  /**
-   *
-   * @param from_address
-   * @param to_address
-   * @param amount
-   */
+
   constructor(coins: MsgCoin[], memo: string, signer: AccAddress) {
     super()
 

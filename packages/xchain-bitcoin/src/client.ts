@@ -1,32 +1,30 @@
-import * as Bitcoin from 'bitcoinjs-lib'
-import * as Utils from './utils'
-import * as sochain from './sochain-api'
 import {
-  RootDerivationPaths,
-  TxHistoryParams,
-  TxsPage,
   Address,
-  XChainClient,
-  Tx,
-  TxParams,
-  TxHash,
   Balance,
+  Fee,
+  FeeOption,
+  FeeRate,
   Network,
-  Fees,
+  Tx,
+  TxHash,
+  TxHistoryParams,
+  TxParams,
+  TxType,
+  TxsPage,
+  UTXOClient,
   XChainClientParams,
 } from '@thorwallet/xchain-client'
 import { validatePhrase, getSeed, bip32 } from '@thorwallet/xchain-crypto'
 import { AssetBTC, assetAmount, assetToBase } from '@thorwallet/xchain-util'
 import { FeesWithRates, FeeRate, FeeRates } from './types/client-types'
+} from '@thorwallet/xchain-client'
+import { getSeed } from '@thorwallet/xchain-crypto'
+import { AssetBTC, Chain, assetAmount, assetToBase } from '@thorwallet/xchain-util'
+import * as Bitcoin from 'bitcoinjs-lib'
 
-/**
- * BitcoinClient Interface
- */
-interface BitcoinClient {
-  getFeesWithRates(memo?: string): Promise<FeesWithRates>
-  getFeesWithMemo(memo: string): Promise<Fees>
-  getFeeRates(): Promise<FeeRates>
-}
+import { BTC_DECIMAL } from './const'
+import * as sochain from './sochain-api'
+import * as Utils from './utils'
 
 export type BitcoinClientParams = XChainClientParams & {
   sochainUrl?: string
@@ -36,9 +34,7 @@ export type BitcoinClientParams = XChainClientParams & {
 /**
  * Custom Bitcoin client
  */
-class Client implements BitcoinClient, XChainClient {
-  private net: Network
-  private phrase = ''
+class Client extends UTXOClient {
   private sochainUrl = ''
   private blockstreamUrl = ''
   private rootDerivationPaths: RootDerivationPaths
@@ -51,14 +47,16 @@ class Client implements BitcoinClient, XChainClient {
    * @param {BitcoinClientParams} params
    */
   constructor({
-    network = 'testnet',
+    network = Network.Testnet,
     sochainUrl = 'https://sochain.com/api/v2',
     blockstreamUrl = 'https://blockstream.info',
     rootDerivationPaths = {
-      mainnet: `84'/0'/0'/0/`, //note this isn't bip44 compliant, but it keeps the wallets generated compatible to pre HD wallets
-      testnet: `84'/1'/0'/0/`,
+      [Network.Mainnet]: `84'/0'/0'/0/`, //note this isn't bip44 compliant, but it keeps the wallets generated compatible to pre HD wallets
+      [Network.Testnet]: `84'/1'/0'/0/`,
     },
+    phrase = '',
   }: BitcoinClientParams) {
+    super(Chain.Bitcoin, { network, rootDerivationPaths, phrase })
     this.net = network
     this.addrCache = {}
     this.rootDerivationPaths = rootDerivationPaths
@@ -72,7 +70,7 @@ class Client implements BitcoinClient, XChainClient {
    * @param {string} url The new sochain url.
    * @returns {void}
    */
-  setSochainUrl = (url: string): void => {
+  setSochainUrl(url: string): void {
     this.sochainUrl = url
   }
 
@@ -82,7 +80,7 @@ class Client implements BitcoinClient, XChainClient {
    * @param {string} url The new blockstream url.
    * @returns {void}
    */
-  setBlockstreamUrl = (url: string): void => {
+  setBlockstreamUrl(url: string): void {
     this.blockstreamUrl = url
   }
 
@@ -154,9 +152,13 @@ class Client implements BitcoinClient, XChainClient {
    *
    * @returns {string} The explorer url based on the network.
    */
-  getExplorerUrl = (): string => {
-    const networkPath = Utils.isTestnet(this.net) ? '/testnet' : ''
-    return `https://blockstream.info${networkPath}`
+  getExplorerUrl(): string {
+    switch (this.network) {
+      case Network.Mainnet:
+        return 'https://blockstream.info'
+      case Network.Testnet:
+        return 'https://blockstream.info/testnet'
+    }
   }
 
   /**
@@ -165,17 +167,16 @@ class Client implements BitcoinClient, XChainClient {
    * @param {Address} address
    * @returns {string} The explorer url for the given address based on the network.
    */
-  getExplorerAddressUrl = (address: Address): string => {
+  getExplorerAddressUrl(address: string): string {
     return `${this.getExplorerUrl()}/address/${address}`
   }
-
   /**
    * Get the explorer url for the given transaction id.
    *
    * @param {string} txID The transaction id
    * @returns {string} The explorer url for the given transaction id based on the network.
    */
-  getExplorerTxUrl = (txID: string): string => {
+  getExplorerTxUrl(txID: string): string {
     return `${this.getExplorerUrl()}/tx/${txID}`
   }
 
@@ -244,24 +245,22 @@ class Client implements BitcoinClient, XChainClient {
    * @param {Address} address
    * @returns {boolean} `true` or `false`
    */
-  validateAddress = (address: string): boolean => Utils.validateAddress(address, this.net)
+  validateAddress(address: string): boolean {
+    return Utils.validateAddress(address, this.network)
+  }
 
   /**
    * Get the BTC balance of a given address.
    *
    * @param {Address} the BTC address
-   * @returns {Array<Balance>} The BTC balance of the address.
+   * @returns {Balance[]} The BTC balance of the address.
    */
-  getBalance = async (address: Address): Promise<Balance[]> => {
-    try {
-      return Utils.getBalance({
-        sochainUrl: this.sochainUrl,
-        network: this.net,
-        address: address,
-      })
-    } catch (e) {
-      return Promise.reject(e)
-    }
+  async getBalance(address: Address): Promise<Balance[]> {
+    return Utils.getBalance({
+      sochainUrl: this.sochainUrl,
+      network: this.network,
+      address: address,
+    })
   }
 
   /**
@@ -271,7 +270,7 @@ class Client implements BitcoinClient, XChainClient {
    * @param {TxHistoryParams} params The options to get transaction history. (optional)
    * @returns {TxsPage} The transaction history.
    */
-  getTransactions = async (params?: TxHistoryParams): Promise<TxsPage> => {
+  async getTransactions(params?: TxHistoryParams): Promise<TxsPage> {
     // Sochain API doesn't have pagination parameter
     const offset = params?.offset ?? 0
     const limit = params?.limit || 10
@@ -326,110 +325,33 @@ class Client implements BitcoinClient, XChainClient {
     }
   }
 
-  /**
-   * Get the transaction details of a given transaction id.
-   *
-   * @param {string} txId The transaction id.
-   * @returns {Tx} The transaction details of the given transaction id.
-   */
-  getTransactionData = async (txId: string): Promise<Tx> => {
-    try {
-      const rawTx = await sochain.getTx({
-        sochainUrl: this.sochainUrl,
-        network: this.net,
-        hash: txId,
-      })
-      return {
-        asset: AssetBTC,
-        from: rawTx.inputs.map((i) => ({
-          from: i.address,
-          amount: assetToBase(assetAmount(i.value, Utils.BTC_DECIMAL)),
-        })),
-        to: rawTx.outputs.map((i) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, Utils.BTC_DECIMAL)) })),
-        date: new Date(rawTx.time * 1000),
-        type: 'transfer',
-        hash: rawTx.txid,
-        binanceFee: null,
-        confirmations: rawTx.confirmations,
-        ethCumulativeGasUsed: null,
-        ethGas: null,
-        ethGasPrice: null,
-        ethGasUsed: null,
-        ethTokenName: null,
-        ethTokenSymbol: null,
-      }
-    } catch (error) {
-      return Promise.reject(error)
+
+
+async getTransactionData(txId: string): Promise<Tx> {
+  const rawTx = await sochain.getTx({
+      sochainUrl: this.sochainUrl,
+      network: this.network,
+      hash: txId,
+    })
+    return {
+      asset: AssetBTC,
+      from: rawTx.inputs.map((i) => ({
+        from: i.address,
+        amount: assetToBase(assetAmount(i.value, BTC_DECIMAL)),
+      })),
+      to: rawTx.outputs.map((i) => ({ to: i.address, amount: assetToBase(assetAmount(i.value, BTC_DECIMAL)) })),
+      date: new Date(rawTx.time * 1000),
+      type: TxType.Transfer,
+      hash: rawTx.txid,
     }
   }
 
-  /**
-   * Get the rates and fees.
-   *
-   * @param {string} memo The memo to be used for fee calculation (optional)
-   * @returns {FeesWithRates} The fees and rates
-   */
-  getFeesWithRates = async (memo?: string): Promise<FeesWithRates> => {
-    const txFee = await sochain.getSuggestedTxFee()
-    const rates: FeeRates = {
-      fastest: txFee * 5,
-      fast: txFee * 1,
-      average: txFee * 0.5,
-    }
-
-    const fees: Fees = {
-      type: 'byte',
-      fast: Utils.calcFee(rates.fast, memo),
-      average: Utils.calcFee(rates.average, memo),
-      fastest: Utils.calcFee(rates.fastest, memo),
-    }
-
-    return { fees, rates }
+  protected async getSuggestedFeeRate(): Promise<FeeRate> {
+    return await sochain.getSuggestedTxFee()
   }
 
-  /**
-   * Get the current fees.
-   *
-   * @returns {Fees} The fees without memo
-   */
-  getFees = async (): Promise<Fees> => {
-    try {
-      const { fees } = await this.getFeesWithRates()
-      return fees
-    } catch (error) {
-      return Promise.reject(error)
-    }
-  }
-
-  /**
-   * Get the fees for transactions with memo.
-   * If you want to get `Fees` and `FeeRates` at once, use `getFeesAndRates` method
-   *
-   * @param {string} memo
-   * @returns {Fees} The fees with memo
-   */
-  getFeesWithMemo = async (memo: string): Promise<Fees> => {
-    try {
-      const { fees } = await this.getFeesWithRates(memo)
-      return fees
-    } catch (error) {
-      return Promise.reject(error)
-    }
-  }
-
-  /**
-   * Get the fee rates for transactions without a memo.
-   * If you want to get `Fees` and `FeeRates` at once, use `getFeesAndRates` method
-   *
-   * @returns {FeeRates} The fee rate
-   */
-  getFeeRates = async (): Promise<FeeRates> => {
-    try {
-      const { rates } = await this.getFeesWithRates()
-      return rates
-    } catch (error) {
-      return Promise.reject(error)
-    }
+  protected async calcFee(feeRate: FeeRate, memo?: string): Promise<Fee> {
+    return Utils.calcFee(feeRate, memo)
   }
 
   /**
@@ -472,4 +394,4 @@ class Client implements BitcoinClient, XChainClient {
   }
 }
 
-export { Client, Network }
+export { Client }
