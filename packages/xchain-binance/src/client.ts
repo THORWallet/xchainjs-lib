@@ -100,9 +100,6 @@ class Client extends BaseXChainClient implements BinanceClient, XChainClient {
     this.bncClient.chooseNetwork(network)
     this.addrCache = {}
   }
-  getNetwork(): Network {
-    throw new Error('Method not implemented.')
-  }
   transfer(_params: TxParams): Promise<string> {
     throw new Error('Method not implemented.')
   }

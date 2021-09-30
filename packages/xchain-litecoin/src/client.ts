@@ -116,23 +116,6 @@ class Client extends UTXOClient {
   }
 
   /**
-   * Set/update the current network.
-   *
-   * @param {Network} network `mainnet` or `testnet`.
-   * @returns {void}
-   *
-   * @throws {"Network must be provided"}
-   * Thrown if network has not been set before.
-   */
-  setNetwork = (net: Network): void => {
-    if (!net) {
-      throw new Error('Network must be provided')
-    } else {
-      this.network = net
-    }
-  }
-
-  /**
    * Get the current network.
    *
    * @returns {Network} The current network. (`mainnet` or `testnet`)

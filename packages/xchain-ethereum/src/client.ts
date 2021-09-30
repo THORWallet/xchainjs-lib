@@ -135,9 +135,6 @@ export default class Client extends BaseXChainClient implements XChainClient, Et
     )
     return contract.estimateGas[funcName](...funcParams)
   }
-  getNetwork(): Network {
-    throw new Error('Method not implemented.')
-  }
 
   /**
    * Purge client.
