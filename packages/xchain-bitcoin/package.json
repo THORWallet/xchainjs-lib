@@ -25,7 +25,7 @@
   },
   "scripts": {
     "clean": "rimraf lib/**",
-    "build": "yarn clean && rollup -c",
+    "build": "yarn clean && tsc",
     "test": "jest",
     "lint": "eslint \"{src,__tests__}/**/*.ts\" --fix --max-warnings 0",
     "prepublishOnly": "yarn build",

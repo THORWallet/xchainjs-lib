@@ -4,6 +4,7 @@
   "compilerOptions": {
     "strictPropertyInitialization": false,
     "strictNullChecks": false,
-    "strict": false
+    "strict": false,
+    "outDir": "lib"
   }
 }

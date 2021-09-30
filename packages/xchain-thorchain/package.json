@@ -25,7 +25,7 @@
   },
   "scripts": {
     "clean": "rimraf lib/**",
-    "build": "yarn clean && rollup -c",
+    "build": "yarn clean && tsc",
     "test": "jest",
     "lint": "eslint \"{src,__tests__}/**/*.ts\" --fix --max-warnings 0",
     "prepublishOnly": "yarn build",
@@ -53,7 +53,6 @@
     "@thorwallet/xchain-util": "0.0.1-alpha.869+49db531",
     "axios": "^0.21.0",
     "cosmos-client": "0.39.2"
-
   },
   "gitHead": "0d871f1d15f4694e6416e10b123af7b37cc623cf"
 }
