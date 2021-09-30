@@ -171,6 +171,7 @@ export const getTxsFromHistory = (txs: TxResponse[], mainAsset: Asset): Tx[] => 
       ethGasUsed: null,
       ethTokenName: null,
       ethTokenSymbol: null,
+      memo: null,
     }
     return [...acc, val] as Tx[]
   }, [] as Tx[])

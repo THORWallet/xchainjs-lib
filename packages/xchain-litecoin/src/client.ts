@@ -317,6 +317,7 @@ class Client extends UTXOClient {
           ethGasUsed: null,
           ethTokenName: null,
           ethTokenSymbol: null,
+          memo: null,
         }
         transactions.push(tx)
       }

@@ -178,6 +178,7 @@ export const parseTransaction = (tx: Transaction): Tx => {
     ethGasUsed: null,
     ethTokenName: null,
     ethTokenSymbol: null,
+    memo: null,
   }
 }
 

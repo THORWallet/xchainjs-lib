@@ -145,6 +145,7 @@ export const getTxFromTokenTransaction = (tx: TokenTransactionInfo): Tx | null =
         ethCumulativeGasUsed: tx.cumulativeGasUsed,
         confirmations: Number(tx.confirmations),
         binanceFee: null,
+        memo: null,
       }
     }
   }
@@ -184,6 +185,7 @@ export const getTxFromEthTransaction = (tx: ETHTransactionInfo): Tx => {
     ethGasPrice: null,
     ethTokenName: null,
     ethTokenSymbol: null,
+    memo: null,
   }
 }
 
@@ -224,6 +226,7 @@ export const getTxFromEthplorerTokenOperation = (operation: TransactionOperation
         ethGasUsed: null,
         ethTokenName: null,
         ethTokenSymbol: null,
+        memo: null,
       }
     }
   }
@@ -263,6 +266,7 @@ export const getTxFromEthplorerEthTransaction = (txInfo: TransactionInfo): Tx =>
     ethGasPrice: null,
     ethTokenName: null,
     ethTokenSymbol: null,
+    memo: null,
   }
 }
 

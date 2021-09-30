@@ -399,6 +399,7 @@ class Client implements PolkadotClient, XChainClient {
           ethGasUsed: null,
           ethTokenName: null,
           ethTokenSymbol: null,
+          memo: null,
         })) as Tx[],
       }
     } catch (error) {
