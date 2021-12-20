@@ -1,6 +1,7 @@
 # XChainJS
 
-XChainJS is a library with a common interface for multiple blockchains, built for simple and fast integration for wallets and more.
+XChainJS is a library with a common interface for multiple blockchains, built for simple and fast integration for
+wallets and more.
 
 Join the conversation!
 https://t.me/xchainjs
@@ -22,11 +23,13 @@ The interface supports as a minimum the following functions for each blockchain:
 
 ### Extended Interface
 
-Some blockchains have different functions. More advanced logic can be built by extending the interface, such as for Binance Chain and Cosmos chains.
+Some blockchains have different functions. More advanced logic can be built by extending the interface, such as for
+Binance Chain and Cosmos chains.
 
 ### Return the Client
 
-For wallets that need even more flexibility (smart contract blockchains) the client can be retrieved and the wallet is then free to handle directly.
+For wallets that need even more flexibility (smart contract blockchains) the client can be retrieved and the wallet is
+then free to handle directly.
 
 ## XChainJS uses following libraries, frameworks and more:
 
@@ -64,6 +67,12 @@ To publish:
 ```
 NPM_USERNAME="TODO Use real npm username" NPM_PASSWORD="TODO Use real npm password" NPM_EMAIL="TODO Use real npm email" ./publish.sh
 
+```
+
+or
+
+```
+yarn lerna publish --canary --exact --force-publish
 ```
 
 ## Contributing
