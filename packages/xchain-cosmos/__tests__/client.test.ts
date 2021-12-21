@@ -1,6 +1,6 @@
 import { Network, TxsPage } from '@thorwallet/xchain-client'
 import { BaseAmount, baseAmount } from '@thorwallet/xchain-util'
-import { BaseAccount, BroadcastTxCommitResult, Coin } from 'cosmos-client/api'
+import { BaseAccount, BroadcastTxCommitResult, Coin } from '@thorwallet/cosmos-client/api'
 import nock from 'nock'
 import { Client } from '../src/client'
 import { TxHistoryResponse, TxResponse } from '../src/cosmos/types'

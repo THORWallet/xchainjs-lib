@@ -12,8 +12,8 @@ import {
   Chain,
 } from '@thorwallet/xchain-util'
 import axios from 'axios'
-import { StdTxFee } from 'cosmos-client/api'
-import { StdTx } from 'cosmos-client/x/auth'
+import { StdTxFee } from '@thorwallet/cosmos-client/api'
+import { StdTx } from '@thorwallet/cosmos-client/x/auth'
 import { ClientUrl, ExplorerUrl, ExplorerUrls, TxData } from './types'
 import { MsgNativeTx, ThorchainDepositResponse } from './types/messages'
 
