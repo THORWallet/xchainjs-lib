@@ -1,3 +1,5 @@
+export { HDNode } from './hdnode/hdnode'
+
 export { estimateApprove } from './estimate-approve'
 export { estimateGasPrices } from './estimate-gas-prices'
 export { ethApprove } from './eth-approve'
