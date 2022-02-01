@@ -1,7 +1,7 @@
 import { Provider } from '@ethersproject/abstract-provider'
 import { Network } from '@thorwallet/xchain-client/lib'
-import { Wallet } from 'ethers'
 import { getHdNode } from './get-hd-node'
+import { Wallet } from './wallet/wallet'
 
 const rootDerivationPaths = {
   mainnet: `m/44'/60'/0'/0/`,
