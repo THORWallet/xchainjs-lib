@@ -1,6 +1,6 @@
 {
   "name": "@thorwallet/xchain-util",
-  "version": "0.1.1-lazy.0",
+  "version": "0.1.1-alpha.964+a188942",
   "description": "Helper utilities for XChain clients",
   "keywords": [
     "THORChain",
@@ -38,5 +38,5 @@
   "publishConfig": {
     "access": "public"
   },
-  "gitHead": "02a3ef3995ed7eb9f0c429898d98288d1b3dac07"
+  "gitHead": "a188942ccc96b31d2e4b63c5f63d2aa0328bd079"
 }

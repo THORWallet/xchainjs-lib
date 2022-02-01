@@ -25,7 +25,6 @@ import { ethCall } from './eth-call'
 import * as etherscanAPI from './etherscan-api'
 import * as ethplorerAPI from './ethplorer-api'
 import { getAddress } from './get-address'
-import { getHdNode } from './get-hd-node'
 import {
   ExplorerUrl,
   FeesParams,
@@ -222,7 +221,7 @@ export default class Client implements XChainClient, EthereumClient {
     if (!Crypto.validatePhrase(phrase)) {
       throw new Error('Invalid phrase')
     }
-    return getAddress({ hdNode: await getHdNode(phrase), network: this.getNetwork(), phrase, index: walletIndex })
+    return getAddress({ network: this.getNetwork(), phrase, index: walletIndex })
   }
 
   /**
