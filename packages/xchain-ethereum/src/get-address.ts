@@ -1,4 +1,5 @@
 import { Network } from '@thorwallet/xchain-client'
+import { getHdNode } from './get-hd-node'
 import { HDNode } from './hdnode/hdnode'
 import { Address } from './types'
 
@@ -17,16 +18,15 @@ export const getAddress = async ({
   network,
   phrase,
   index,
-  hdNode,
 }: {
   network: Network
   phrase: string
   index: number
-  hdNode: HDNode
 }): Promise<Address> => {
   if (addrCache[phrase] && addrCache[phrase][index]) {
     return addrCache[phrase][index]
   }
+  const hdNode = await getHdNode(phrase)
   const address = (await hdNode.derivePath(getFullDerivationPath(network, index))).address.toLowerCase()
   if (!addrCache[phrase]) {
     addrCache[phrase] = {}
