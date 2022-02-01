@@ -17,15 +17,16 @@ export const getAddress = async ({
   network,
   phrase,
   index,
+  hdNode,
 }: {
   network: Network
   phrase: string
   index: number
+  hdNode: HDNode
 }): Promise<Address> => {
   if (addrCache[phrase] && addrCache[phrase][index]) {
     return addrCache[phrase][index]
   }
-  const hdNode = await HDNode.fromMnemonic(phrase)
   const address = (await hdNode.derivePath(getFullDerivationPath(network, index))).address.toLowerCase()
   if (!addrCache[phrase]) {
     addrCache[phrase] = {}

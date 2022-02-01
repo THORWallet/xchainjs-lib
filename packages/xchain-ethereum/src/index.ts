@@ -1,15 +1,15 @@
+export { estimateApprove } from './estimate-approve'
+export { estimateGasPrices } from './estimate-gas-prices'
+export { ethApprove } from './eth-approve'
+export { ethCall } from './eth-call'
+export { estimateCall } from './eth-estimate-call'
+export { isApproved } from './eth-is-approved'
+export { getEtherscanProvider } from './get-etherscan-provider'
+export { getHdNode } from './get-hd-node'
+export { getWallet } from './get-wallet'
+
 export { getAddress } from './get-address'
 export { getBalance } from './get-balance'
 export * from './types'
 export * from './client'
-export {
-  estimateDefaultFeesWithGasPricesAndLimits,
-  getDecimal,
-  getDefaultFees,
-  getTokenAddress,
-  getPrefix,
-  getFee,
-  validateAddress,
-  ETHAddress,
-  ETH_DECIMAL,
-} from './utils'
+export { getDecimal, getTokenAddress, getPrefix, getFee, validateAddress, ETHAddress, ETH_DECIMAL } from './utils'
