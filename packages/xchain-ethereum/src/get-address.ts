@@ -1,6 +1,5 @@
 import { Network } from '@thorwallet/xchain-client'
 import { getHdNode } from './get-hd-node'
-import { HDNode } from './hdnode/hdnode'
 import { Address } from './types'
 
 const addrCache: Record<string, Record<number, string>> = {}
