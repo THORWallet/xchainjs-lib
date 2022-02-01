@@ -12,7 +12,17 @@ export const getFullDerivationPath = ({ index, network }: { index: number; netwo
   return rootDerivationPaths[network] + `${index}`
 }
 
-export const getWallet = async (provider: Provider, hdNode: HDNode, index: number, network: Network) => {
+export const getWallet = async ({
+  provider,
+  hdNode,
+  index,
+  network,
+}: {
+  provider: Provider
+  hdNode: HDNode
+  index: number
+  network: Network
+}) => {
   const newHdNode = await hdNode.derivePath(getFullDerivationPath({ index, network }))
   return new Wallet(newHdNode).connect(provider)
 }
