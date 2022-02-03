@@ -9,6 +9,7 @@ export { isApproved } from './eth-is-approved'
 export { getEtherscanProvider } from './get-etherscan-provider'
 export { getHdNode } from './get-hd-node'
 export { getWallet } from './get-wallet'
+export { Wallet } from './wallet/wallet'
 
 export { getAddress } from './get-address'
 export { getBalance } from './get-balance'
