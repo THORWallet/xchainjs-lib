@@ -1,7 +1,6 @@
 import { ethers, BigNumber } from 'ethers'
 import { BaseAmount } from '@thorwallet/xchain-util'
 import * as C from '@thorwallet/xchain-client'
-import { FeeOptionKey } from '@thorwallet/xchain-client'
 
 export type Address = string
 
@@ -40,11 +39,3 @@ export type GasPrices = Record<C.FeeOptionKey, BaseAmount>
 export type FeesParams = C.FeesParams & C.TxParams
 
 export type FeesWithGasPricesAndLimits = { fees: C.Fees; gasPrices: GasPrices; gasLimit: BigNumber }
-
-export type ApproveParams = {
-  walletIndex: number
-  spender: Address
-  sender: Address
-  feeOptionKey?: FeeOptionKey
-  amount?: BaseAmount
-}

@@ -1,4 +1,4 @@
-import { Balances, Fees, Network as XChainNetwork, Tx } from '@thorwallet/xchain-client'
+import { Balances, Network as XChainNetwork, Tx } from '@thorwallet/xchain-client'
 import {
   Asset,
   AssetETH,
@@ -11,14 +11,11 @@ import {
   assetToBase,
 } from '@thorwallet/xchain-util'
 import { ethers, BigNumber, providers } from 'ethers'
-import { parseUnits } from 'ethers/lib/utils'
 import {
   Network as EthNetwork,
   Address,
   ETHTransactionInfo,
   TokenTransactionInfo,
-  FeesWithGasPricesAndLimits,
-  GasPrices,
   TransactionOperation,
   TransactionInfo,
   TokenBalance,
@@ -37,7 +34,6 @@ export const BASE_TOKEN_GAS_COST: ethers.BigNumber = BigNumber.from(100000)
 export const DEFAULT_GAS_PRICE = 50
 
 export const ETHAddress = '0x0000000000000000000000000000000000000000'
-export const MAX_APPROVAL = BigNumber.from(2).pow(256).sub(1)
 
 /**
  * XChainNetwork -> EthNetwork
@@ -283,58 +279,6 @@ export const getTxFromEthplorerEthTransaction = (txInfo: TransactionInfo): Tx =>
  */
 export const getFee = ({ gasPrice, gasLimit }: { gasPrice: BaseAmount; gasLimit: BigNumber }) =>
   baseAmount(gasPrice.amount().multipliedBy(gasLimit.toString()), ETH_DECIMAL)
-
-export const estimateDefaultFeesWithGasPricesAndLimits = (asset?: Asset): FeesWithGasPricesAndLimits => {
-  const gasPrices = {
-    average: baseAmount(parseUnits(DEFAULT_GAS_PRICE.toString(), 'gwei').toString(), ETH_DECIMAL),
-    fast: baseAmount(parseUnits((DEFAULT_GAS_PRICE * 2).toString(), 'gwei').toString(), ETH_DECIMAL),
-    fastest: baseAmount(parseUnits((DEFAULT_GAS_PRICE * 3).toString(), 'gwei').toString(), ETH_DECIMAL),
-  }
-  const { fast: fastGP, fastest: fastestGP, average: averageGP } = gasPrices
-
-  let assetAddress
-  if (asset && assetToString(asset) !== assetToString(AssetETH)) {
-    assetAddress = getTokenAddress(asset)
-  }
-
-  let gasLimit
-  if (assetAddress && assetAddress !== ETHAddress) {
-    gasLimit = BigNumber.from(BASE_TOKEN_GAS_COST)
-  } else {
-    gasLimit = BigNumber.from(SIMPLE_GAS_COST)
-  }
-
-  return {
-    gasPrices,
-    gasLimit,
-    fees: {
-      type: 'byte',
-      average: getFee({ gasPrice: averageGP, gasLimit }),
-      fast: getFee({ gasPrice: fastGP, gasLimit }),
-      fastest: getFee({ gasPrice: fastestGP, gasLimit }),
-    },
-  }
-}
-
-/**
- * Get the default fees.
- *
- * @returns {Fees} The default gas price.
- */
-export const getDefaultFees = (asset?: Asset): Fees => {
-  const { fees } = estimateDefaultFeesWithGasPricesAndLimits(asset)
-  return fees
-}
-
-/**
- * Get the default gas price.
- *
- * @returns {Fees} The default gas prices.
- */
-export const getDefaultGasPrices = (asset?: Asset): GasPrices => {
-  const { gasPrices } = estimateDefaultFeesWithGasPricesAndLimits(asset)
-  return gasPrices
-}
 
 /**
  * Get address prefix based on the network.
