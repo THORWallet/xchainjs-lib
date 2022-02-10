@@ -5,7 +5,11 @@ import { Address } from '@thorwallet/xchain-client/lib'
 import { Network } from './client'
 import { bip32, getSeed } from '@thorwallet/xchain-crypto/lib'
 
-const addrCache: Record<string, Record<number, string>> = {}
+const addrCache: Record<string, string> = {}
+
+const getCacheKey = ({ network, phrase, index }: { network: Network; phrase: string; index: number }) => {
+  return [network, phrase, index].join('-')
+}
 
 const rootDerivationPaths = {
   mainnet: `m/84'/2'/0'/0/`,
@@ -49,8 +53,9 @@ export const getAddress = async ({
   if (index < 0) {
     throw new Error('index must be greater than zero')
   }
-  if (addrCache[phrase] && addrCache[phrase][index]) {
-    return addrCache[phrase][index]
+  const cacheKey = getCacheKey({ index, network, phrase })
+  if (addrCache[cacheKey]) {
+    return addrCache[cacheKey]
   }
   const ltcNetwork = Utils.ltcNetwork(network)
   const ltcKeys = await getLtcKeys({ network, phrase, index })
@@ -63,9 +68,6 @@ export const getAddress = async ({
   if (!address) {
     throw new Error('Address not defined')
   }
-  if (!addrCache[phrase]) {
-    addrCache[phrase] = {}
-  }
-  addrCache[phrase][index] = address
+  addrCache[cacheKey] = address
   return address
 }

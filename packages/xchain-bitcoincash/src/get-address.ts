@@ -5,8 +5,11 @@ const BigInteger = require('bigi')
 const bitcash = require('@psf/bitcoincashjs-lib')
 import * as utils from './utils'
 
-const addrCache: Record<string, Record<number, string>> = {}
+const addrCache: Record<string, string> = {}
 
+const getCacheKey = ({ network, phrase, index }: { network: Network; phrase: string; index: number }) => {
+  return [network, phrase, index].join('-')
+}
 const ENABLE_FAST = true
 
 const rootDerivationPaths = {
@@ -48,20 +51,18 @@ export const getAddress = async ({
   phrase: string
   index?: number
 }): Promise<Address> => {
-  if (addrCache[phrase] && addrCache[phrase][index]) {
-    return addrCache[phrase][index]
+  const cacheKey = getCacheKey({
+    index,
+    network,
+    phrase,
+  })
+  if (addrCache[cacheKey]) {
+    return addrCache[cacheKey]
   }
-  try {
-    const keys = await getBCHKeys(network, phrase, getFullDerivationPath(network, index))
-    const address = await keys.getAddress(index)
+  const keys = await getBCHKeys(network, phrase, getFullDerivationPath(network, index))
+  const address = await keys.getAddress(index)
 
-    const addr = utils.stripPrefix(utils.toCashAddress(address))
-    if (!addrCache[phrase]) {
-      addrCache[phrase] = {}
-    }
-    addrCache[phrase][index] = addr
-    return addr
-  } catch (error) {
-    throw new Error('Address not defined')
-  }
+  const addr = utils.stripPrefix(utils.toCashAddress(address))
+  addrCache[cacheKey] = addr
+  return addr
 }

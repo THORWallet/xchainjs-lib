@@ -1,7 +1,11 @@
 import { Network } from '@thorwallet/xchain-client/lib'
 import { MAINNET_SDK, TESTNET_SDK } from '../sdk-clients'
 
-const addrCache: Record<string, Record<number, string>> = {}
+const addrCache: Record<string, string> = {}
+
+const getCacheKey = ({ network, phrase, index }: { network: Network; phrase: string; index: number }) => {
+  return [network, phrase, index].join('-')
+}
 
 const getFullDerivationPath = (network: string, index: number): string => {
   return (
@@ -21,16 +25,14 @@ export const getAddress = async ({
   phrase: string
   index: number
 }): Promise<string> => {
-  if (addrCache[phrase] && addrCache[phrase][index]) {
-    return addrCache[phrase][index]
+  const cacheKey = getCacheKey({ index, network, phrase })
+  if (addrCache[cacheKey]) {
+    return addrCache[cacheKey]
   }
 
   const sdk = network === 'mainnet' ? MAINNET_SDK : TESTNET_SDK
 
   const addr = await sdk.getAddressFromMnemonic(phrase, getFullDerivationPath(network, index))
-  if (!addrCache[phrase][index]) {
-    addrCache[phrase] = {}
-  }
-  addrCache[phrase][index] = addr
+  addrCache[cacheKey] = addr
   return addr
 }

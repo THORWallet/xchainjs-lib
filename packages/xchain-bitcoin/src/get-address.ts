@@ -4,7 +4,11 @@ import { Address, Network } from '@thorwallet/xchain-client/lib'
 import { getSeed } from '@thorwallet/xchain-crypto/lib'
 import { bip32 } from '@thorwallet/xchain-crypto'
 
-const addrCache: Record<string, Record<number, string>> = {}
+const addrCache: Record<string, string> = {}
+
+const getCacheKey = ({ network, phrase, index }: { network: Network; phrase: string; index: number }) => {
+  return [network, phrase, index].join('-')
+}
 
 const rootDerivationPaths = {
   mainnet: `84'/0'/0'/0/`, //note this isn't bip44 compliant, but it keeps the wallets generated compatible to pre HD wallets
@@ -40,8 +44,10 @@ export const getAddress = async ({
   if (index < 0) {
     throw new Error('index must be greater than zero')
   }
-  if (addrCache[phrase] && addrCache[phrase][index]) {
-    return addrCache[phrase][index]
+  const cacheKey = getCacheKey({ index, network, phrase })
+
+  if (addrCache[cacheKey]) {
+    return addrCache[cacheKey]
   }
   const btcNetwork = Utils.btcNetwork(network)
   const btcKeys = await getBtcKeys(network, phrase, index)
@@ -53,9 +59,6 @@ export const getAddress = async ({
   if (!address) {
     throw new Error('Address not defined')
   }
-  if (!addrCache[phrase]) {
-    addrCache[phrase] = {}
-  }
-  addrCache[phrase][index] = address
+  addrCache[cacheKey] = address
   return address
 }

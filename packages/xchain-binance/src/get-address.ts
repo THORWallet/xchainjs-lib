@@ -3,7 +3,11 @@ import { bip32, getSeed } from '@thorwallet/xchain-crypto/lib'
 import { Network } from './types'
 import { getPrefix } from './util'
 
-const addrCache: Record<string, Record<number, string>> = {}
+const getCacheKey = ({ network, phrase, index }: { network: Network; phrase: string; index: number }) => {
+  return [network, phrase, index].join('-')
+}
+
+const addrCache: Record<string, string> = {}
 
 const getPrivateKeyFromMnemonic = async (phrase: string, derive: boolean, index: number): Promise<string> => {
   const HDPATH = "44'/714'/0'/0/"
@@ -29,8 +33,9 @@ export const getAddress = async ({
   phrase: string
   index: number
 }): Promise<string> => {
-  if (addrCache[phrase] && addrCache[phrase][index]) {
-    return addrCache[phrase][index]
+  const cacheKey = getCacheKey({ index, network, phrase })
+  if (addrCache[cacheKey]) {
+    return addrCache[cacheKey]
   }
 
   const address = crypto.getAddressFromPrivateKey(
@@ -38,9 +43,6 @@ export const getAddress = async ({
     getPrefix(network),
   )
 
-  if (!addrCache[phrase]) {
-    addrCache[phrase] = {}
-  }
-  addrCache[phrase][index] = address
+  addrCache[cacheKey] = address
   return address
 }
