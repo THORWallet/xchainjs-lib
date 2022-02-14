@@ -101,7 +101,7 @@ export interface XChainClient {
   setNetwork(net: Network): void
   getNetwork(): Network
 
-  getExplorerUrl(): string
+  getExplorerUrl(network: string): string
   getExplorerAddressUrl(address: Address): string
   getExplorerTxUrl(txID: string): string
 
