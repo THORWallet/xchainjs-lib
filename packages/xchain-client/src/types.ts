@@ -100,15 +100,11 @@ export interface XChainClient {
 
   validateAddress(network: Network, address: string): boolean
 
-  setPhrase(network: Network, phrase: string, walletIndex: number): Promise<Address>
-
-  getTransactions(network: Network, params?: TxHistoryParams): Promise<TxsPage>
+  getTransactions(network: Network, params: TxHistoryParams): Promise<TxsPage>
 
   getTransactionData(network: Network, txId: string, assetAddress?: Address): Promise<Tx>
 
   getFees(network: Network, params: FeesParams): Promise<Fees>
 
-  transfer(phrase: string, network: Network, params: TxParams): Promise<TxHash>
-
-  purgeClient(): void
+  transfer(network: Network, phrase: string, params: TxParams): Promise<TxHash>
 }
