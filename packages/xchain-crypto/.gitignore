@@ -1,8 +1,0 @@
-node_modules
-lib/__tests__/
-coverage
-
-yarn-error.log
-
-.DS_Store
-.history
