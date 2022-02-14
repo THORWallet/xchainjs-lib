@@ -103,7 +103,7 @@ export interface XChainClient {
 
   getExplorerUrl(network: Network): string
   getExplorerAddressUrl(network: Network, address: Address): string
-  getExplorerTxUrl(txID: string): string
+  getExplorerTxUrl(network: Network, txID: string): string
 
   validateAddress(address: string): boolean
 
