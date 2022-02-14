@@ -100,7 +100,7 @@ export interface XChainClient {
 
   validateAddress(network: Network, address: string): boolean
 
-  setPhrase(phrase: string, walletIndex: number): Promise<Address>
+  setPhrase(network: Network, phrase: string, walletIndex: number): Promise<Address>
 
   getTransactions(network: Network, params?: TxHistoryParams): Promise<TxsPage>
 
