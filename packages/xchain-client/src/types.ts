@@ -115,7 +115,7 @@ export interface XChainClient {
 
   getFees(params?: FeesParams): Promise<Fees>
 
-  transfer(network: Network, params: TxParams): Promise<TxHash>
+  transfer(phrase: string, network: Network, params: TxParams): Promise<TxHash>
 
   purgeClient(): void
 }
