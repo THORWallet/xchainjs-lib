@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 import { fixedBN, formatBN } from './bn'
 import { trimZeros as trimZerosHelper } from './string'
-import { BTCChain, LTCChain, BNBChain, ETHChain, THORChain, BCHChain } from './chain.const'
+import { BTCChain, LTCChain, BNBChain, ETHChain, THORChain, BCHChain, DOGEChain } from './chain.const'
 import { isChain } from './chain'
 import { Denomination, AssetAmount, BaseAmount, Amounts, Asset } from './types'
 
@@ -201,6 +201,13 @@ export const AssetLTC: Asset = { chain: LTCChain, symbol: 'LTC', ticker: 'LTC' }
  * @see https://gitlab.com/thorchain/thornode/-/blob/master/common/asset.go#L12-24
  */
 export const AssetETH: Asset = { chain: ETHChain, symbol: 'ETH', ticker: 'ETH' }
+
+/**
+ * Dogecoin asset
+ * Based on definition in Thorchain
+ * @see https://gitlab.com/thorchain/thornode/-/blob/781-add-doge-chain/common/asset.go#L24
+ */
+export const AssetDOGE: Asset = { chain: DOGEChain, symbol: 'DOGE', ticker: 'DOGE' }
 
 export const RUNE_TICKER = 'RUNE'
 
