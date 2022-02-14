@@ -91,16 +91,9 @@ export type RootDerivationPaths = {
   testnet: string
 }
 
-export type XChainClientParams = {
-  network?: Network
-  phrase?: string
-  rootDerivationPaths?: RootDerivationPaths
-}
+export type XChainClientParams = Record<string, never>
 
 export interface XChainClient {
-  setNetwork(net: Network): void
-  getNetwork(): Network
-
   getExplorerUrl(network: Network): string
   getExplorerAddressUrl(network: Network, address: Address): string
   getExplorerTxUrl(network: Network, txID: string): string
