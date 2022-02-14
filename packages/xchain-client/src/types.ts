@@ -109,13 +109,13 @@ export interface XChainClient {
 
   setPhrase(phrase: string, walletIndex: number): Promise<Address>
 
-  getTransactions(params?: TxHistoryParams): Promise<TxsPage>
+  getTransactions(network: Network, params?: TxHistoryParams): Promise<TxsPage>
 
-  getTransactionData(txId: string, assetAddress?: Address): Promise<Tx>
+  getTransactionData(network: Network, txId: string, assetAddress?: Address): Promise<Tx>
 
   getFees(params?: FeesParams): Promise<Fees>
 
-  transfer(params: TxParams): Promise<TxHash>
+  transfer(network: Network, params: TxParams): Promise<TxHash>
 
   purgeClient(): void
 }
