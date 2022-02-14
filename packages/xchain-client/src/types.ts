@@ -105,7 +105,7 @@ export interface XChainClient {
   getExplorerAddressUrl(network: Network, address: Address): string
   getExplorerTxUrl(network: Network, txID: string): string
 
-  validateAddress(address: string): boolean
+  validateAddress(network: Network, address: string): boolean
 
   setPhrase(phrase: string, walletIndex: number): Promise<Address>
 
