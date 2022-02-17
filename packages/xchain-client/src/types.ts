@@ -104,7 +104,7 @@ export interface XChainClient {
 
   getTransactionData(network: Network, txId: string, assetAddress?: Address): Promise<Tx>
 
-  getFees(network: Network, params: FeesParams): Promise<Fees>
+  getFees(network: Network, params: FeesParams, data: string | null): Promise<Fees>
 
   transfer(params: { network: Network; phrase: string; params: TxParams }): Promise<TxHash>
 }
